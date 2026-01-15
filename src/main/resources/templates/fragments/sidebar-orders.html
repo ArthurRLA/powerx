@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:th="http://www.thymeleaf.org"
+	xmlns:sec="https://www.thymeleaf.org/thymeleaf-extras-springsecurity5">
+<body>
+	<div th:fragment="sidebar-orders">
+		<div class="orders-options-sidebar">
+			<ul class="orders-options-sidebar-list">
+				<li class="orders-options-sidebar-list-item"><a
+					href="/orders/document-number">Pedido por N° do Documento</a></li>
+				<li class="orders-options-sidebar-list-item"><a
+					href="/orders/customer">Pedido por Cliente</a></li>
+				<li class="orders-options-sidebar-list-item"><a
+					href="/orders/state">Pedido por Região</a></li>
+				<li class="orders-options-sidebar-list-item"><a
+					href="/orders/group">Pedido por Grupo</a></li>
+			</ul>
+		</div>
+	</div>
+</body>
+</html>

@@ -1,0 +1,44 @@
+.orders-options-sidebar {
+    width: 25%;
+    margin-top: 60px;
+    background-color: ghostwhite;
+    padding: 15px;
+    border: 1px solid darkgrey;
+    position: fixed;
+    left: 0;
+    top: 0;
+    overflow-y: auto;
+    height: calc(100vh - 60px);
+    z-index: 100;
+}
+
+.orders-options-sidebar-list {
+    list-style: none;
+    padding: 0;
+}
+
+.orders-options-sidebar-list-item {
+    padding: 10px;
+    border-bottom: 1px solid gainsboro;
+}
+
+.orders-options-sidebar-list-item a {
+    text-decoration: none;
+    color: darkslategray;
+}
+
+.main-content {
+    margin-left: 25%;
+    padding: 20px;
+    margin-top: 60px;
+}
+
+.half-width{
+	max-width: 50%;
+}
+
+.rigth-placed{
+	display: flex;
+	justify-content: flex-end;
+}
+

@@ -1,0 +1,30 @@
+<div th:fragment="incentivesByUser (documentNumbers)">
+  <table class="table table-striped" id="tableBody">
+    <thead>
+      <tr>
+        <th scope="col">N° do Documento</th>
+        <th scope="col">Mês de referência</th>
+        <th scope="col">Cliente</th>
+        <th scope="col">Detalhes</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr th:each="entry : ${documentNumbers}">
+        <td th:text="${entry.key}"></td>
+        <td th:text="${entry.value.date}"></td>
+        <td th:text="${entry.value.customerName}"></td>
+        <td>
+          <button
+            type="button"
+            class="btn btn-secondary"
+            th:data-document-number="${entry.key}"
+            data-bs-toggle="modal"
+            data-bs-target="#documentModal"
+            data-bs-dismiss="modal">
+            Detalhes
+          </button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>

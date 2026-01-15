@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<title>Valor dos incentivos</title>
+</head>
+<body>
+	<div th:fragment="incentive-values (incentiveValues, product)">
+		<table class="table mt-5" id="tableBody">
+			<thead>
+				<tr>
+					<th>função</th>
+					<th>Conta Corrente</th>
+					<th>NF Serviço</th>
+					<th>Over</th>
+					<th>Remover</th>
+				</tr>
+			</thead>
+			<tbody th:id="'tableBody-' + ${product.id}">
+				<tr th:each="value : ${incentiveValues}"
+					th:id="'row-' + ${value.id}">
+					<td>
+						<div class="col">
+							<select class="form-select" name="function" required>
+								<option th:value="${value.function.id}"
+									th:text="${value.function.name}" selected></option>
+							</select>
+						</div>
+					</td>
+					<td>
+						<div class="col">
+							<input type="number" class="form-control" name="ccValue"
+								placeholder="Conta Corrente" th:value="${value.ccValue}" step="any"
+								required>
+						</div>
+					</td>
+					<td>
+						<div class="col">
+							<input type="number" class="form-control" name="nfsValue"
+								placeholder="NF Serviço" th:value="${value.nfsValue}" step="any"
+								required>
+						</div>
+					</td>
+					<td>
+						<div class="col">
+							<input type="number" class="form-control" name="overValue"
+								placeholder="Over" th:value="${value.overValue}" step="any"
+								required>
+						</div>
+					</td>
+					<td>
+						<div class="col">
+							<button type="button" class="btn btn-danger"
+								th:onclick="'removeIncentiveValue(' + ${value.product.id} + ',' + ${value.id} + ')'">
+								Remover</button>
+						</div>
+					</td>
+				</tr>
+			</tbody>
+		</table>
+		
+		<div class="my-2">
+			<p><strong>Total Conta Corrente: </strong><span th:text="${ccTotal != null ? ccTotal : '0.00'}"></span></p>
+			<p><strong>Total NF Serviço: </strong><span th:text="${nfsTotal != null ? nfsTotal : '0.00'}"></span></p>
+			<p><strong>Total Over: </strong><span th:text="${overTotal != null ? overTotal : '0.00'}"></span></p>
+		</div>
+		
+		<div class="mt-3">
+			<button type="button" class="btn btn-secondary mb-3"
+				th:onclick="'addIncentiveRow(' + ${product.id} + ')'">Adicionar
+				Valores</button>
+		</div>
+	</div>
+</body>
+</html>

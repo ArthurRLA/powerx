@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:th="http://www.thymeleaf.org"
+	xmlns:sec="https://www.thymeleaf.org/thymeleaf-extras-springsecurity5">
+<body>
+	<div th:fragment="sidebar">
+		<button class="btn btn-primary d-md-none" type="button"
+			data-bs-toggle="offcanvas" data-bs-target="#offcanvasSidebar"
+			aria-controls="offcanvasSidebar" style="margin-top: 120px">
+			Menu</button>
+
+		<nav
+			class="col-md-2 d-none d-md-block bg-light sidebar position-fixed sidebar-wrapped">
+			<div class="position-sticky position-sticky-custom">
+				<h5 class="sidebar-title">Administração</h5>
+				<ul class="nav flex-column">
+					<li class="nav-item"><a class="nav-link nav-link-custom"
+						th:href="@{/users}">Usuários</a></li>
+					<li class="nav-item"><a class="nav-link nav-link-custom"
+						th:href="@{/partner-groups}">Grupos Parceiros</a></li>
+					<li class="nav-item"><a class="nav-link nav-link-custom"
+						th:href="@{/customers}">Clientes</a></li>
+					<li class="nav-item"><a class="nav-link nav-link-custom"
+						th:href="@{/products}">Produtos</a></li>
+					<li class="nav-item"><a class="nav-link nav-link-custom"
+						th:href="@{/employees}">Premiados</a></li>
+					<li class="nav-item"><a class="nav-link nav-link-custom"
+						th:href="@{/payments}">Métodos de Pagamento</a></li>
+					<li class="nav-item"><a class="nav-link nav-link-custom"
+						th:href="@{/industry}">Seguimentos</a></li>
+					<li class="nav-item"><a class="nav-link nav-link-custom"
+						th:href="@{/flags}">Bandeiras</a></li>
+					<li class="nav-item"><a class="nav-link nav-link-custom"
+						th:href="@{/table-prices}">Tabela de Preço</a></li>
+					<li class="nav-item"><a class="nav-link nav-link-custom"
+						th:href="@{/revenues}">Faturamentos</a></li>
+				</ul>
+			</div>
+		</nav>
+
+
+		<div class="offcanvas offcanvas-start d-md-none" tabindex="-1"
+			id="offcanvasSidebar" aria-labelledby="offcanvasSidebarLabel">
+			<div class="offcanvas-header">
+				<h5 class="offcanvas-title" id="offcanvasSidebarLabel">Administração</h5>
+				<button type="button" class="btn-close" data-bs-dismiss="offcanvas"
+					aria-label="Close"></button>
+			</div>
+			<div class="offcanvas-body">
+				<ul class="nav flex-column">
+					<li class="nav-item"><a class="nav-link nav-link-custom"
+						th:href="@{/users}" id="link-users">Usuários</a></li>
+					<li class="nav-item"><a class="nav-link nav-link-custom"
+						th:href="@{/partner-groups}" id="link-partner-groups">Grupos
+							Parceiros</a></li>
+					<li class="nav-item"><a class="nav-link nav-link-custom"
+						th:href="@{/customers}" id="link-customers">Clientes</a></li>
+					<li class="nav-item"><a class="nav-link nav-link-custom"
+						th:href="@{/products}" id="link-products">Produtos</a></li>
+					<li class="nav-item"><a class="nav-link nav-link-custom"
+						th:href="@{/employees}" id="link-awards">Premiados</a></li>
+					<li class="nav-item"><a class="nav-link nav-link-custom"
+						th:href="@{/incentives}" id="link-incentives-launch">Lançamentos
+							de Incentivos</a></li>
+					<li class="nav-item"><a class="nav-link nav-link-custom"
+						th:href="@{/payment-order}" id="link-payment-order">Pedido de
+							Pagamento por Cliente</a></li>
+					<li class="nav-item"><a class="nav-link nav-link-custom"
+						th:href="@{/payment-order/state}" id="link-payment-order">Pedido
+							de Pagamento por Região</a></li>
+					<li class="nav-item"><a class="nav-link nav-link-custom"
+						th:href="@{/payments}" id="link-payments">Métodos de Pagamento</a></li>
+					<li class="nav-item"><a class="nav-link nav-link-custom"
+						th:href="@{/industry}" id="link-payments">Seguimentos</a></li>
+					<li class="nav-item"><a class="nav-link nav-link-custom"
+						th:href="@{/flags}" id="link-payments">Bandeiras</a></li>
+					<li class="nav-item"><a class="nav-link nav-link-custom"
+						th:href="@{/table-prices}" id="link-payments">Tabela de Preço</a></li>
+				</ul>
+			</div>
+		</div>
+	</div>
+</body>
+</html>

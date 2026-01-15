@@ -1,0 +1,120 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background-color: transparent;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+#container {
+    display: flex;
+    background-color: #ffffffcc; 
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    max-width: 800px;
+    width: 90%;
+}
+
+#area-login {
+    padding: 40px;
+    background-color: #ffffff;
+    flex: 1;
+}
+
+#area-login h1 {
+    margin-bottom: 20px;
+    color: #333;
+    text-align: center;
+}
+
+#form-login form {
+    display: flex;
+    flex-direction: column;
+}
+
+#form-login form div {
+    margin-bottom: 15px;
+}
+
+#form-login label {
+    display: block;
+    margin-bottom: 5px;
+    color: #555;
+}
+
+#form-login input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+#form-login button {
+    padding: 10px;
+    background-color:#1C1C1C;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s ease;
+}
+
+#form-login button:hover {
+    background-color: #45a049;
+}
+
+#area-login p {
+    margin-top: 10px;
+    text-align: center;
+    font-weight: bold;
+}
+
+#area-login p.error {
+    color: red;
+}
+
+#area-login p.success {
+    color: green;
+}
+
+#area-desc {
+    padding: 40px;
+    background-color: #1C1C1C;
+    text-align: center;
+    color: #ffffff;
+    flex: 1;
+}
+
+#area-desc img {
+    max-width: 150px;
+    margin-bottom: 20px;
+}
+
+#area-desc h2 {
+    color: #333;
+    font-size: 1.2em;
+}
+
+
+@media (max-width: 768px) {
+    #container {
+        flex-direction: column;
+    }
+
+    #area-desc {
+        padding: 20px;
+    }
+
+    #area-login {
+        padding: 20px;
+    }
+}

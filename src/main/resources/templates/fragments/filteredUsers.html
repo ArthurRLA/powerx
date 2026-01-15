@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<title>Usuários filtrados</title>
+</head>
+<body>
+	<div th:fragment="filtered-users (users)">
+		<table class="table mt-3 table-straped" id="tableBody">
+			<thead>
+				<tr>
+					<th>ID</th>
+					<th>Nome</th>
+					<th>Ações</th>
+				</tr>
+			</thead>
+			<tbody>
+
+				<tr th:each="user : ${users}">
+					<td th:text="${user.id}"></td>
+					<td th:text="${user.name}"></td>
+					<td>
+						<button type="button" class="btn btn-warning"
+							th:data-user-id="${user.id}" data-bs-toggle="modal"
+							data-bs-target="#editUserModal">Editar</button>
+						<button type="button" class="btn btn-info" data-bs-toggle="modal"
+							th:data-user-id="${user.id}" data-bs-target="#detailsUserModal">Detalhes</button>
+					</td>
+				</tr>
+			</tbody>
+		</table>
+		<div class="d-flex justify-content-center mt-3">
+			<ul class="pagination">
+				<li class="page-item"
+					th:classappend="${currentPage == 0} ? 'disabled'"><a
+					class="page-link" href="#"
+					th:data-url="@{'/users/filter'(
+             positions=${positions},
+             states=${states},
+			 active=${active},
+             page=${currentPage - 1},
+             size=${size}
+           )}">
+						Anterior </a></li>
+				<li class="page-item"
+					th:each="i : ${#numbers.sequence(0, totalPages - 1)}"
+					th:classappend="${i == currentPage} ? 'active'"><a
+					class="page-link" href="#"
+					th:data-url="@{'/users/filter'(
+             positions=${positions},
+             states=${states},
+			 active=${active},
+             page=${i},
+             size=${size}
+           )}"
+					th:text="${i + 1}"> </a></li>
+				<li class="page-item"
+					th:classappend="${currentPage == totalPages - 1} ? 'disabled'">
+					<a class="page-link" href="#"
+					th:data-url="@{'/users/filter'(
+             positions=${positions},
+             states=${states},
+			 active=${active},
+             page=${currentPage + 1},
+             size=${size}
+           )}">
+						Próximo </a>
+				</li>
+			</ul>
+		</div>
+	</div>
+</body>
+</html>

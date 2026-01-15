@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<title>Usuários filtrados</title>
+</head>
+<body>
+	<div th:fragment="filtered-employees (employees)">
+		<table class="table mt-3 table-straped" id="tableBody">
+			<thead>
+				<tr>
+					<th>ID</th>
+					<th>Nome</th>
+					<th>Ações</th>
+				</tr>
+			</thead>
+			<tbody>
+
+				<tr th:each="employee : ${employees}">
+					<td th:text="${employee.id}"></td>
+					<td th:text="${employee.name}"></td>
+					<td>
+						<button type="button" class="btn btn-warning"
+							th:data-employee-id="${employee.id}" data-bs-toggle="modal"
+							data-bs-target="#editEmployeeModal">Editar</button>
+						<button type="button" class="btn btn-info"
+							th:data-employee-id="${employee.id}" data-bs-toggle="modal"
+							data-bs-target="#detailsEmployeeModal">Detalhes</button>
+					</td>
+				</tr>
+			</tbody>
+		</table>
+		<div class="d-flex justify-content-center mt-3">
+			<ul class="pagination">
+				<li class="page-item"
+					th:classappend="${currentPage == 0} ? 'disabled'"><a
+					class="page-link" href="#"
+					th:data-url="@{'/employees/filter'(
+             functionIds=${functionIds},
+             customerIds=${customerIds},
+			 active=${active},
+             page=${currentPage - 1},
+             size=${size}
+           )}">
+						Anterior </a></li>
+				<li class="page-item"
+					th:each="i : ${#numbers.sequence(0, totalPages - 1)}"
+					th:classappend="${i == currentPage} ? 'active'"><a
+					class="page-link" href="#"
+					th:data-url="@{'/employees/filter'(
+             functions=${functionIds},
+             customers=${customerIds},
+			 active=${active},
+             page=${i},
+             size=${size}
+           )}"
+					th:text="${i + 1}"> </a></li>
+				<li class="page-item"
+					th:classappend="${currentPage == totalPages - 1} ? 'disabled'">
+					<a class="page-link" href="#"
+					th:data-url="@{'/employees/filter'(
+             functionIds=${functionIds},
+             customerIds=${customerIds},
+			 active=${active},
+             page=${currentPage + 1},
+             size=${size}
+           )}">
+						Próximo </a>
+				</li>
+			</ul>
+		</div>
+	</div>
+</body>
+</html>

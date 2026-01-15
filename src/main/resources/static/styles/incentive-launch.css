@@ -1,0 +1,38 @@
+.main-content{
+    margin-top: 70px;
+    margin-left: 20%;
+    margin-right: 10%;
+}
+
+.centered-content{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.flex-end{
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+}
+
+.th-w-10{
+    width: 10%;
+}
+
+.th-w-15{
+    width: 15%;
+}
+
+.th-w-50{
+    width: 50%;
+}
+
+.th-w-60{
+    width: 60%;
+}
+
+.th-w-65{
+    width: 65%;
+}

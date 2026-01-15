@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<title>Clientes filtrados</title>
+</head>
+<body>
+	<div th:fragment="filtered-customers (customers)">
+		<table class="table mt-3 table-straped" id="tableBody">
+			<thead>
+				<tr>
+					<th>ID</th>
+					<th>Nome</th>
+					<th>Ações</th>
+				</tr>
+			</thead>
+			<tbody>
+
+				<tr th:each="customer : ${customers}">
+					<td th:text="${customer.id}"></td>
+					<td th:text="${customer.fantasyName}"></td>
+					<td>
+						<button type="button" class="btn btn-warning"
+							data-bs-toggle="modal" data-bs-target="#editCustomerModal"
+							th:attr="data-customer-id=${customer.id}">Editar</button>
+						<button type="button" class="btn btn-info" data-bs-toggle="modal"
+							data-bs-target="#detailsCustomerModal"
+							th:attr="data-customer-id=${customer.id}">Detalhes</button>
+					</td>
+				</tr>
+
+			</tbody>
+		</table>
+		<div class="d-flex justify-content-center mt-3">
+			<ul class="pagination">
+				<li class="page-item"
+					th:classappend="${currentPage == 0} ? 'disabled'"><a
+					class="page-link" href="#"
+					th:data-url="@{'/customers/filter'(
+             users=${filterUsers},
+             groups=${filterGroups},
+             industries=${filterIndustries},
+             flags=${filterFlags},
+			 active=${active},
+             page=${currentPage - 1},
+             size=${size}
+           )}">
+						Anterior </a></li>
+				<li class="page-item"
+					th:each="i : ${#numbers.sequence(0, totalPages - 1)}"
+					th:classappend="${i == currentPage} ? 'active'"><a
+					class="page-link" href="#"
+					th:data-url="@{'/customers/filter'(
+             users=${filterUsers},
+             groups=${filterGroups},
+             industries=${filterIndustries},
+             flags=${filterFlags},
+			 active=${active},
+             page=${i},
+             size=${size}
+           )}"
+					th:text="${i + 1}"> </a></li>
+				<li class="page-item"
+					th:classappend="${currentPage == totalPages - 1} ? 'disabled'">
+					<a class="page-link" href="#"
+					th:data-url="@{'/customers/filter'(
+             users=${filterUsers},
+             groups=${filterGroups},
+             industries=${filterIndustries},
+             flags=${filterFlags},
+			 active=${active},
+             page=${currentPage + 1},
+             size=${size}
+           )}">
+						Próximo </a>
+				</li>
+			</ul>
+		</div>
+	</div>
+</body>
+</html>

@@ -1,0 +1,216 @@
+/* Importação da Fonte "Inter" do Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@200;400;600&display=swap');
+
+
+
+
+/* Reset básico para garantir consistência entre navegadores */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* Fonte e cor de fundo para todo o corpo */
+body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+/* Container principal que ocupa todo o espaço disponível */
+#container {
+    display: flex;
+    background-color: #ffffffcc; /* Fundo branco com transparência */
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    width: 100%; /* Ocupa todo o espaço disponível */
+    height: 100vh; /* Ajuste conforme necessário */
+}
+
+/* Área de descrição - 70% do container */
+#area-desc {
+    width: 70%;
+    padding: 40px;
+    background-color: #1C1C1C; /* Fundo escuro */
+    color: #ffffff; /* Texto branco */
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start; /* Alinha o texto para o início */
+    font-style: italic; /* Texto em itálico */
+    font-family: 'Inter', sans-serif; /* Fonte Inter */
+    position: relative; /* Para posicionamento da imagem */
+}
+
+#area-desc img {
+       position: absolute;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    /* max-width: 50%; */
+    margin: 80px auto 50px;
+}
+
+#area-desc h2 {
+    color: #ffffff; /* Texto branco */
+    font-size: 1.2em;
+    margin-top: 250px; /* Espaçamento para a imagem */
+}
+
+/* Área de login - 30% do container */
+#area-login {
+    width: 30%;
+    padding: 40px;
+    background-color: #f1f1f1; /* Fundo claro */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+#area-login h1 {
+    margin-bottom: 20px;
+    color: #333;
+    text-align: center;
+}
+
+#form-login form {
+    display: flex;
+    flex-direction: column;
+}
+
+#form-login form div {
+    margin-bottom: 15px;
+}
+
+#form-login label {
+    display: block;
+    margin-bottom: 5px;
+    color: #1C1C1C; /* Cor do label */
+}
+
+#form-login input {
+    width: 100%;
+    padding: 10px;
+    background-color: #D9D9D9; /* Fundo do input */
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-style: italic; /* Placeholder em itálico */
+    font-weight: 200; /* Extra light */
+}
+
+/* Estilizar o placeholder */
+#form-login input::placeholder {
+    color: #000000; /* Cor do placeholder */
+    font-style: italic;
+    font-weight: 200; /* Extra light */
+}
+
+#form-login button {
+	width: 100%;
+    padding: 10px;
+    background-color: #1C1C1C; /* Fundo do botão */
+    color: #ffffff; /* Cor do texto */
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s ease;
+}
+
+#form-login button:hover {
+    background-color: #333333;
+}
+
+/* Mensagens de erro e sucesso */
+#area-login p {
+    margin-top: 10px;
+    text-align: center;
+    font-weight: bold;
+}
+
+#area-login p.error {
+    color: red;
+}
+
+#area-login p.success {
+    color: green;
+}
+
+/* Link "Esqueci minha senha" */
+#area-login .forgot-password {
+    margin-top: 10px;
+    text-align: right;
+}
+
+#area-login .forgot-password a {
+    color: #1C1C1C;
+    text-decoration: none;
+    font-style: italic; /* Itálico */
+}
+
+#area-login .forgot-password a:hover {
+    text-decoration: underline;
+}
+
+
+@media (max-width: 768px) {
+    #container {
+        flex-direction: column;
+        height: auto;
+    }
+
+    #area-desc, #area-login {
+        width: 100%;
+        padding: 20px;
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

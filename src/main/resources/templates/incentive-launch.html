@@ -1,0 +1,933 @@
+<!DOCTYPE html>
+<html lang="pt-br" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="_csrf" th:content="${_csrf.token}" />
+    <meta name="_csrf_header" th:content="${_csrf.headerName}" />
+    <title>Lançamento de Incentivos</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <link rel="icon" th:href="@{/images/powerx-icon.png}">
+    <link rel="stylesheet" th:href="@{/styles/navbar-custom.css}">
+    <link rel="stylesheet" th:href="@{/styles/sidebar-custom.css}">
+    <link rel="stylesheet" th:href="@{/styles/incentive-launch.css}">
+</head>
+
+<body>
+    <div th:replace="~{fragments/navbar :: navbar}"></div>
+    <div sec:authorize="hasRole('ADMIN')" th:replace="~{fragments/sidebar :: sidebar}"></div>
+
+    <div class="main-content">
+        <h1 class="mb-4">Lançamento de Incentivos</h1>
+
+        <div class="d-grid gap-2 d-md-block mt-3">
+            <button id="newIncentiveBtn" class="btn btn-primary" type="button">Novo Lançamento<i
+                    class="bi bi-receipt ms-3"></i></button>
+            <button id="openFilterModal" class="btn btn-secondary" type="button">Filtros<i
+                    class="bi bi-funnel ms-3"></i></button>
+            <button class="btn btn-secondary" type="button" onclick="clearIncentiveFilters()">Limpar filtros<i
+                    class="bi bi-arrow-clockwise ms-3"></i></button>
+        </div>
+
+        <div id="incentivesTableArea">
+            <div class="container">
+                <div class="my-5">
+                    <table class="table table-striped" id="tableBody">
+                        <thead>
+                            <tr>
+                                <th scope="col">N° do Documento</th>
+                                <th scope="col">Mês referência</th>
+                                <th scope="col">Cliente</th>
+                                <th scope="col">Detalhes</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="entry : ${documentNumbers}">
+                                <td th:text="${entry.key}"></td>
+                                <td th:text="${entry.value.date}"></td>
+                                <td th:text="${entry.value.customerName}"></td>
+                                <td>
+                                    <button type="button" class="btn btn-secondary"
+                                        th:data-document-number="${entry.key}"
+                                        onclick="loadDocumentDetails(this)">Detalhes</button>
+                                    <button sec:authorize="hasRole('ADMIN')" type="button" class="btn btn-warning"
+                                        th:data-document-number="${entry.key}"
+                                        onclick="loadDocumentDetailsToEdit(this)">Editar</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="d-flex justify-content-center mt-3">
+                <ul class="pagination">
+                    <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled'"><a class="page-link"
+                            th:href="@{/incentives(page=${currentPage - 1}, size=50)}">Anterior</a>
+                    </li>
+                    <li class="page-item" th:each="i : ${#numbers.sequence(0, totalPages - 1)}"
+                        th:classappend="${i == currentPage} ? 'active'"><a class="page-link"
+                            th:href="@{/incentives(page=${i}, size=50)}" th:text="${i + 1}"></a></li>
+                    <li class="page-item" th:classappend="${currentPage == totalPages - 1} ? 'disabled'">
+                        <a class="page-link" th:href="@{/incentives(page=${currentPage + 1}, size=50)}">Próximo</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="documentModal" tabindex="-1" aria-labelledby="documentModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-scrollable modal-fullscreen">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="documentModalLabel">Detalhes
+                        do Documento</h5>
+                </div>
+                <div class="modal-body">
+                    <div id="generalDocumentInfos">
+                        <div class="row">
+                            <div class="row">
+                                <div class="col">
+                                    <p><strong>N° Documento: </strong><span id="documentInfosDocumentNumber"></span></p>
+                                    <p><strong>Data: </strong><span id="documentInfosDate"></span></p>
+                                    <p><strong>Método de Pagamentos: </strong><span
+                                            id="documentInfosPaymentMethod"></span></p>
+                                </div>
+                                <div class="col">
+                                    <p><strong>Região: </strong><span id="documentInfosState"></span></p>
+                                    <p><strong>Cliente: </strong><span id="documentInfosCustomer"></span></p>
+                                    <p><strong>CNPJ: </strong><span id="documentInfosCnpj"></span></p>
+                                </div>
+                                <div class="col">
+                                    <p><strong>Total de Vendas: </strong><span id="documentInfosSalesTotal"></span></p>
+                                    <p><strong>Total de Funilaria: </strong><span id="documentInfosTinkerTotal"></span></p>
+                                    <p><strong>Total de Aplicações: </strong><span
+                                            id="documentInfosAplicationsTotal"></span></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="documentInfosSaleArea" class="w-75 mt-5">
+                        <h4><strong>Vendas</strong></h4>
+                        <div id="documentInfosSaleAreaDetailment" class="mb-5"></div>
+                    </div>
+                    <div id="documentInfosTinkerArea" class="w-75 mt-5">
+                        <h4><strong>Funilaria</strong></h4>
+                        <div id="documentInfosTinkerAreaDetailment" class="mb-5"></div>
+                    </div>
+                    <div id="documentInfosAplicationArea" class="w-75 mt-5">
+                        <h4><strong>Aplicações</strong></h4>
+                        <div id="documentInfosAplicationAreaDetailment" class="mb-5"></div>
+                    </div>
+                    <div id="documentInfosProductResume" class="w-75 mt-5">
+                        <h4><strong>Resumo de Vendas por Produto</strong></h4>
+                        <table class="table table-sm table-striped table-hover table-bordered border-dark w-75">
+                            <thead>
+                                <tr>
+                                    <th class="small">CÓD.</th>
+                                    <th class="small">Descrição</th>
+                                    <th class="small">Consultores</th>
+                                    <th class="small">Mecânicos</th>
+                                </tr>
+                            </thead>
+                            <tbody id="documentInfosTotalPerFunctionTBody">
+
+                            </tbody>
+                        </table>
+                    </div>
+                    <div id="documentInfosCCIncentives" class="mt-5">
+                        <h4><strong>Incentivos Conta Corrente</strong></h4>
+                        <table class="table table-sm table-bordered table-hover table-striped border-dark w-75">
+                            <thead>
+                                <tr>
+                                    <th class="small">CPF</th>
+                                    <th class="small">Nome</th>
+                                    <th class="small">Valor</th>
+                                    <th class="small">Função</th>
+                                </tr>
+                            </thead>
+                            <tbody id="documentInfosCCIncentivesTBody">
+
+                            </tbody>
+                        </table>
+                        <h6>Total: <span id="documentInfosCcIncentiveTotal"></span></h6>
+                    </div>
+                    <div id="documentInfosNFSIncentive" class="mt-5">
+                        <h4><strong>Incentivos NF Serviço</strong></h4>
+                        <table class="table table-sm table-bordered table-hover table-striped border-dark w-75">
+                            <thead>
+                                <tr>
+                                    <th class="small">CPF</th>
+                                    <th class="small">Nome</th>
+                                    <th class="small">Valor</th>
+                                    <th class="small">Função</th>
+                                </tr>
+                            </thead>
+                            <tbody id="documentInfosNFSIncentivesTBody">
+
+                            </tbody>
+                        </table>
+                        <h6>Total: <span id="documentInfosNfsIncentiveTotal"></span></h6>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button sec:authorize="hasRole('ADMIN')" type="button" class="btn btn-danger"
+                        id="openConfirmDeleteModal">Deletar</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                    <button type="button" class="btn btn-primary" id="downloadReport">Gerar Relatótio</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div sec:authorize="hasRole('ADMIN')" class="modal fade" id="confirmDeleteModal" data-bs-backdrop="static"
+        data-bs-keyboard="false" tabindex="-1" aria-labelledby="confirmDeleteModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h1 class="modal-title fs-5" id="confirmDeleteModalLabel">Confirmar Deleção</h1>
+                </div>
+                <div class="modal-body">
+                    <p class="text-danger">Tem Certeza que deseja deletar esse incentivo?</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Não, voltar</button>
+                    <button type="button" id="deleteIncentnveBtn" class="btn btn-primary">Sim, deletar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div sec:authorize="hasRole('ADMIN')" class="modal fade" id="updateIncentiveModal" data-bs-backdrop="static"
+        data-bs-keyboard="false" tabindex="-1" aria-labelledby="updateIncentiveModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-scrollable modal-fullscreen">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h1 class="modal-title fs-5" id="updateIncentiveModalLabel">Atualizar Incentivo: <span
+                            id="updateIncentiveModalDocumentNumber"></span></h1>
+                </div>
+                <div class="modal-body">
+                    <div id="unupdatableInfos" class="row mx-5">
+                        <div class="col">
+                            <p><strong>N° do Documento: </strong><span id="updateIncentiveDocumentNumber"></span></p>
+                        </div>
+                        <div class="col">
+                            <p><strong>Cliente: </strong><span id="updateIncentiveCustomer"></span></p>
+                        </div>
+                        <div class="col">
+                            <p><strong>Data: </strong><span id="updateIncentiveDate"></span></p>
+                        </div>
+                    </div>
+                    <div id="updateIncentiveConsultantSales" class="w-75 mx-5 mt-5">
+                        <h4>Venda dos Consultores</h4>
+                        <table class="table table-hover table-bordered table-striped border-dark w-75">
+                            <thead>
+                                <tr>
+                                    <th>Consultor</th>
+                                    <th>Produto</th>
+                                    <th>Quantidade</th>
+                                    <th>Remover</th>
+                                </tr>
+                            </thead>
+                            <tbody id="updateIncentiveConsultantSalesTableBody">
+
+                            </tbody>
+                        </table>
+                        <div id="addBtnConsultant"></div>
+                    </div>
+                    <div id="updateIncentiveTinkerSales" class="w-75 mx-5 mt-5">
+                        <h4>Venda da Funilaria</h4>
+                        <table class="table table-hover table-bordered table-striped border-dark w-75">
+                            <thead>
+                                <tr>
+                                    <th>Consultor</th>
+                                    <th>Produto</th>
+                                    <th>Quantidade</th>
+                                    <th>Remover</th>
+                                </tr>
+                            </thead>
+                            <tbody id="updateIncentiveTinkerSalesTableBody">
+
+                            </tbody>
+                        </table>
+                        <div id="addBtnTinker"></div>
+                    </div>
+                    <div id="updateIncentiveMechanicSales" class="w-75 mx-5 mt-5">
+                        <h4>Venda dos Mecânicos</h4>
+                        <table class="table table-hover table-bordered table-striped border-dark w-75">
+                            <thead>
+                                <tr>
+                                    <th>Mecânico</th>
+                                    <th>Produto</th>
+                                    <th>Quantidade</th>
+                                    <th>Remover</th>
+                                </tr>
+                            </thead>
+                            <tbody id="updateIncentiveMechanicSalesTableBody">
+
+                            </tbody>
+                        </table>
+                        <div id="addBtnMechanic"></div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                    <button type="button" class="btn btn-primary" id="openConfirmUpdateModal">Salvar Alterações</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div sec:authorize="hasRole('ADMIN')" class="modal fade" id="confirmUpdateModal" data-bs-backdrop="static"
+        data-bs-keyboard="false" tabindex="-1" aria-labelledby="confirmUpdateModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h1 class="modal-title fs-5" id="confirmUpdateModalLabel">Confirmar Alterações</h1>
+                </div>
+                <div class="modal-body">
+                    <p class="text-warning"><strong>Tem certeza que deseja salvar as alterações?</strong></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Não, Voltar</button>
+                    <button type="button" class="btn btn-primary" id="confirmUpdateBtn">Sim, Salvar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade incentive-page-modal" id="page1" data-bs-backdrop="static" data-bs-keyboard="false"
+        tabindex="-1" aria-labelledby="page1Label" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-scrollable modal-fullscreen">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h1 class="modal-title fs-5" id="page1Label">Novo Incentivo</h1>
+                    <button type="button" class="btn-close" aria-label="Close"></button>
+                </div>
+                <div class="m-3 d-flex">
+                    <strong>Selecionar Cliente</strong><i class="bi bi-arrow-right-circle mx-2"></i>
+                    <p>Vendas dos Consultores</p><i class="bi bi-arrow-right-circle mx-2"></i>
+                    <p>Vendas da Funilaria</p><i class="bi bi-arrow-right-circle mx-2"></i>
+                    <p>Aplicação dos mecânicos</p><i class="bi bi-arrow-right-circle mx-2"></i>
+                    <p>Resumo dos lançamentos</p><i class="bi bi-arrow-right-circle mx-2"></i>
+                    <p>Incentivos Calculados</p>
+                </div>
+                <div class="modal-body">
+                    <div class="centered-content">
+                        <h3>Selecione um cliente</h3>
+                        <select id="newIncentiveCustomerSelect" class="form-select select2 w-25">
+                            <option value="default" selected disabled>Selecione um Cliente</option>
+                            <option th:each="customer : ${customers}" th:value="${customer.id}"
+                                th:text="${customer.fantasyName}"></option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button id="go-to-page-2" type="button" class="btn btn-primary">Avançar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade incentive-page-modal" id="page2" data-bs-backdrop="static" data-bs-keyboard="false"
+        tabindex="-1" aria-labelledby="page2Label" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-scrollable modal-fullscreen">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h1 class="modal-title fs-5" id="page2Label">Novo Incentivo</h1>
+                    <button type="button" class="btn-close" aria-label="Close"></button>
+                </div>
+                <div class="m-3 d-flex">
+                    <p>Selecionar Cliente</p><i class="bi bi-arrow-right-circle mx-2"></i>
+                    <strong>Vendas dos Consultores</strong><i class="bi bi-arrow-right-circle mx-2"></i>
+                    <p>Vendas da Funilaria</p><i class="bi bi-arrow-right-circle mx-2"></i>
+                    <p>Aplicação dos mecânicos</p><i class="bi bi-arrow-right-circle mx-2"></i>
+                    <p>Resumo dos lançamentos</p><i class="bi bi-arrow-right-circle mx-2"></i>
+                    <p>Incentivos Calculados</p>
+                </div>
+                <div class="modal-body">
+                    <div id="noConsultantsAvailable" style="display: none;">
+                        <strong>Sem consultores nessa loja, clique em avançar</strong>
+                    </div>
+                    <div class="w-75" id="consultantModalBody">
+                        <h3>Selecione um Consultor</h3>
+                        <select id="newIncentiveConsultantSelect" class="form-select select2 w-50">
+                            <option value="default" selected disabled>Selecione um Consultor</option>
+                        </select>
+                        <div class="flex-end">
+                            <table class="mt-5 table table-sm table-striped table-hover table-bordered border-dark">
+                                <thead class="table-light table-bordered border-dark">
+                                    <th class="th-w-10 small">CÓD.</th>
+                                    <th class="th-w-60 small">Descrição</th>
+                                    <th class="th-w-10 small">Quantidade</th>
+                                    <th class="th-w-10 small">incentivo</th>
+                                    <th class="th-w-10 small">Total</th>
+                                </thead>
+                                <tbody id="consultantSalesTableBody">
+
+                                </tbody>
+                            </table>
+                            <button type="button" class="btn btn-secondary" id="saveConsultantSale">Adicionar
+                                Venda</button>
+                        </div>
+
+                        <table class="mt-5 table table-striped table-hover table-bordered border-dark w-75">
+                            <thead class="table-light table-bordered border-dark">
+                                <th>Consultor</th>
+                                <th>Total</th>
+                                <th>Ações</th>
+                            </thead>
+                            <tbody id="consultantResumeSalesTableBody">
+
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button id="go-to-page-6" type="button" class="btn btn-primary">Avançar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade incentive-page-modal" id="page6" data-bs-backdrop="static" data-bs-keyboard="false"
+        tabindex="-1" aria-labelledby="page6Label" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-scrollable modal-fullscreen">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h1 class="modal-title fs-5" id="page6Label">Novo Incentivo</h1>
+                    <button type="button" class="btn-close" aria-label="Close"></button>
+                </div>
+                <div class="m-3 d-flex">
+                    <p>Selecionar Cliente</p><i class="bi bi-arrow-right-circle mx-2"></i>
+                    <p>Vendas dos Consultores</p><i class="bi bi-arrow-right-circle mx-2"></i>
+                    <strong>Vendas da Funilaria</strong><i class="bi bi-arrow-right-circle mx-2"></i>
+                    <p>Aplicação dos mecânicos</p><i class="bi bi-arrow-right-circle mx-2"></i>
+                    <p>Resumo dos lançamentos</p><i class="bi bi-arrow-right-circle mx-2"></i>
+                    <p>Incentivos Calculados</p>
+                </div>
+                <div class="modal-body">
+                    <div id="noTinkerAvailable" style="display: none;">
+                        <strong>Sem funilaria nessa loja, clique em avançar</strong>
+                    </div>
+                    <div class="w-75" id="tinkerModalBody">
+                        <h3>Selecione um Consultor de Funilaria</h3>
+                        <select id="tinkerSelect" class="form-select select2 w-50">
+                            <option value="default" selected disabled>Selecione um Consultor de Funilaria</option>
+                        </select>
+                        <div class="flex-end">
+                            <table class="mt-5 table table-sm table-striped table-hover table-bordered border-dark">
+                                <thead class="table-light table-bordered border-dark">
+                                    <th class="th-w-10 small">CÓD.</th>
+                                    <th class="th-w-60 small">Descrição</th>
+                                    <th class="th-w-10 small">Quantidade</th>
+                                    <th class="th-w-10 small">incentivo</th>
+                                    <th class="th-w-10 small">Total</th>
+                                </thead>
+                                <tbody id="tinkerSalesTableBody">
+
+                                </tbody>
+                            </table>
+                            <button type="button" class="btn btn-secondary" id="saveTinkerSale">Adicionar
+                                Venda</button>
+                        </div>
+
+                        <table class="mt-5 table table-striped table-hover table-bordered border-dark w-75">
+                            <thead class="table-light table-bordered border-dark">
+                                <th>Consultor</th>
+                                <th>Total</th>
+                                <th>Ações</th>
+                            </thead>
+                            <tbody id="tinkerResumeSalesTableBody">
+
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button id="go-to-page-3" type="button" class="btn btn-primary">Avançar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade incentive-page-modal" id="page3" data-bs-backdrop="static" data-bs-keyboard="false"
+        tabindex="-1" aria-labelledby="page3Label" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-scrollable modal-fullscreen">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h1 class="modal-title fs-5" id="page3Label">Novo Incentivo</h1>
+                    <button type="button" class="btn-close" aria-label="Close"></button>
+                </div>
+                <div class="m-3 d-flex">
+                    <p>Selecionar Cliente</p><i class="bi bi-arrow-right-circle mx-2"></i>
+                    <p>Vendas dos Consultores</p><i class="bi bi-arrow-right-circle mx-2"></i>
+                    <strong>Aplicação dos mecânicos</strong><i class="bi bi-arrow-right-circle mx-2"></i>
+                    <p>Resumo dos lançamentos</p><i class="bi bi-arrow-right-circle mx-2"></i>
+                    <p>Incentivos Calculados</p>
+                </div>
+                <div class="modal-body">
+                    <div id="noMechanicsAvailable" style="display: none;">
+                        <strong>Sem mecânicos nessa loja, clique em avançar</strong>
+                    </div>
+                    <div class="w-75" id="mechanicsModalBody">
+                        <h3>Selecione um Mecânico</h3>
+                        <select id="newIncentiveMechanicSelect" class="form-select select2 w-50">
+                            <option value="default" selected disabled>Selecione um Mecânico</option>
+                        </select>
+                        <div class="flex-end">
+                            <table class="mt-5 table table-striped table-hover table-bordered border-dark">
+                                <thead class="table-light table-bordered border-dark">
+                                    <th class="th-w-10">CÓD.</th>
+                                    <th class="th-w-60">Descrição</th>
+                                    <th class="th-w-10">Quantidade</th>
+                                    <th class="th-w-10">incentivo</th>
+                                    <th class="th-w-10">Total</th>
+                                </thead>
+                                <tbody id="mechanicSalesTableBody">
+
+                                </tbody>
+                            </table>
+                            <button type="button" class="btn btn-secondary" id="saveMechanicSale">Adicionar
+                                Venda</button>
+                        </div>
+
+                        <table class="mt-5 table table-striped table-hover table-bordered border-dark w-75">
+                            <thead class="table-light table-bordered border-dark">
+                                <th>mecânico</th>
+                                <th>Total</th>
+                                <th>Ações</th>
+                            </thead>
+                            <tbody id="mechanicResumeSalesTableBody">
+
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button id="go-to-page-4" type="button" class="btn btn-primary">Avançar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade incentive-page-modal" id="page4" data-bs-backdrop="static" data-bs-keyboard="false"
+        tabindex="-1" aria-labelledby="page4Label" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-scrollable modal-fullscreen">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h1 class="modal-title fs-5" id="page4Label">Novo Incentivo</h1>
+                    <button type="button" class="btn-close" aria-label="Close"></button>
+                </div>
+                <div class="m-3 d-flex">
+                    <p>Selecionar Cliente</p><i class="bi bi-arrow-right-circle mx-2"></i>
+                    <p>Vendas dos Consultores</p><i class="bi bi-arrow-right-circle mx-2"></i>
+                    <p>Aplicação dos mecânicos</p><i class="bi bi-arrow-right-circle mx-2"></i>
+                    <strong>Resumo dos lançamentos</strong><i class="bi bi-arrow-right-circle mx-2"></i>
+                    <p>Incentivos Calculados</p><i class="bi bi-arrow-right-circle mx-2"></i>
+                </div>
+                <div class="modal-body">
+                    <div class="">
+                        <h3>Resumo vendas e aplicações</h3>
+                        <div id="salesResumeInfos">
+                            <div id="saleResumeInfosTotals" class="w-75">
+                                <table class="table table-hover table-sm table-bordered border-dark w-50">
+                                    <tbody>
+                                        <tr>
+                                            <td class="table-light table-bordered border-dark"><strong class="col">Total
+                                                    de Vendas Consultores:
+                                                </strong></td>
+                                            <td>
+                                                <p id="totalConsultants"></p>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="table-light table-bordered border-dark"><strong class="col">Total
+                                                    de Vendas Funilaria:
+                                                </strong></td>
+                                            <td>
+                                                <p id="totalTinkers"></p>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="table-light table-bordered border-dark"><strong class="col">Total
+                                                    de Aplicação
+                                                    Mecânicos: </strong></td>
+                                            <td>
+                                                <p id="totalMechanics"></p>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="table-light table-bordered border-dark"><strong class="col">Total
+                                                    de Lançamentos:
+                                                </strong></td>
+                                            <td>
+                                                <p id="totalSalesFinalResume"></p>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <div id="resumeTotalPerFunctionTable" class="w-75">
+                                <h4 class="mt-5">Tabela Total por Função</h4>
+                                <table class="table table-striped table-hover table-bordered border-dark w-75">
+                                    <thead class="table table-light table-bordered border-dark">
+                                        <tr>
+                                            <th>CÓD.</th>
+                                            <th>Descrição</th>
+                                            <th>Consultores</th>
+                                            <th>Mecânicos</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="resumeTotalPerFunctionTBody">
+
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <div id="consultantFinalResumeSalesTable" class="w-75">
+                                <h4 class="mt-5">Vendas Consultores</h4>
+                                <table class="table table-striped table-hover table-bordered border-dark w-75">
+                                    <thead class="table-light table-bordered border-dark">
+                                        <th>Consultor</th>
+                                        <th>Total</th>
+                                        <th>Ações</th>
+                                    </thead>
+                                    <tbody id="consultantFinalResumeSalesTableBody">
+
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <div id="tinkerFinalResumeSalesTable" class="w-75">
+                                <h4 class="mt-5">Vendas Funilaria</h4>
+                                <table class="table table-striped table-hover table-bordered border-dark w-75">
+                                    <thead class="table-light table-bordered border-dark">
+                                        <th>Funileiro</th>
+                                        <th>Total</th>
+                                        <th>Ações</th>
+                                    </thead>
+                                    <tbody id="tinkerFinalResumeSalesTableBody">
+
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <div id="mechanicFinalResumeSalesTable" class="w-75">
+                                <h4 class="mt-5">Vendas/Aplicação Mecânicos</h4>
+                                <table class="table table-striped table-hover table-bordered border-dark w-75">
+                                    <thead class="table-light table-bordered border-dark">
+                                        <th>Mecânico</th>
+                                        <th>Total</th>
+                                        <th>Ações</th>
+                                    </thead>
+                                    <tbody id="mechanicFinalResumeSalesTableBody">
+
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button id="go-to-page-5" type="button" class="btn btn-primary">Avançar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade incentive-page-modal" id="page5" data-bs-backdrop="static" data-bs-keyboard="false"
+        tabindex="-1" aria-labelledby="page5Label" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-scrollable modal-fullscreen">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h1 class="modal-title fs-5" id="page5Label">Novo Incentivo</h1>
+                </div>
+                <div class="m-3 d-flex">
+                    <p>Selecionar Cliente</p><i class="bi bi-arrow-right-circle mx-2"></i>
+                    <p>Vendas dos Consultores</p><i class="bi bi-arrow-right-circle mx-2"></i>
+                    <p>Aplicação dos mecânicos</p><i class="bi bi-arrow-right-circle mx-2"></i>
+                    <p>Resumo dos lançamentos</p><i class="bi bi-arrow-right-circle mx-2"></i>
+                    <strong>Incentivos Calculados</strong>
+                </div>
+                <div class="modal-body">
+                    <div class="">
+                        <h3>Incentivos Calculados</h3>
+                        <div id="GeneralIncentiveInfos" class="row w-75">
+                            <div class="col">
+                                <div>
+                                    <p><strong>Mês Referência : </strong><span id="incentiveReferenceDate"></span></p>
+                                </div>
+                                <div>
+                                    <p><strong>Região : </strong><span id="incentiveState"></span></p>
+                                </div>
+                                <div>
+                                    <p><strong>Método de Pagamento : </strong><span id="incentivePaymentMethod"></span>
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="col">
+                                <div>
+                                    <p><strong>Cliente : </strong><span id="incentiveCustomerName"></span></p>
+                                </div>
+                                <div>
+                                    <p><strong>CNPJ : </strong><span id="incentiveCustomerCnpj"></span></p>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="currentAccountIncentives" class="mt-3">
+                            <h5>Conta Corrente</h5>
+                            <table class="table table-sm table-bordered table-hover table-striped border-dark w-75">
+                                <thead>
+                                    <tr>
+                                        <th>CPF</th>
+                                        <th>Nome</th>
+                                        <th>Valor</th>
+                                        <th>Função</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="currentAccountIncentivesCalculatedTableBody">
+
+                                </tbody>
+                            </table>
+                            <h6>Total: <span id="incentivesCalculatedCcIncentiveTotal"></span></h6>
+                        </div>
+
+                        <div id="nfsIncentives" class="mt-5">
+                            <h5>NF Serviço </h5>
+                            <table class="table table-sm table-bordered table-hover table-striped border-dark w-75">
+                                <thead>
+                                    <tr>
+                                        <th>CPF</th>
+                                        <th>Nome</th>
+                                        <th>Valor</th>
+                                        <th>Função</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="nfsIncentivesCalculatedTableBody">
+
+                                </tbody>
+                            </table>
+                            <h6>Total: <span id="incentivesCalculatedNfsIncentiveTotal"></span></h6>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button id="generate-report" type="button" class="btn btn-primary">Gerar Relatório</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="exitConfirm" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1"
+        aria-labelledby="exitConfirmLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h1 class="modal-title fs-5" id="exitConfirmLabel">Confirmação</h1>
+                </div>
+                <div class="modal-body">
+                    <h6 class="text-danger">Tem certeza que deseja sair? Ao sair todos os lançamentos serão apagados,
+                        esse processo é
+                        irreversível</h6>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Não</button>
+                    <button id="exitConfirmBtn" type="button" class="btn btn-primary">Sim</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="consultantResumeSalesModal" data-bs-backdrop="static" data-bs-keyboard="false"
+        tabindex="-1" aria-labelledby="consultantResumeSalesModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h1 class="modal-title fs-5" id="consultantResumeSalesModalLabel">Vendas de: <span
+                            id="resumeEmpName"></span>
+                    </h1>
+                </div>
+                <div class="modal-body">
+                    <table class="mt-5 table table-striped table-hover table-bordered border-dark">
+                        <thead class="table-light table-bordered border-dark">
+                            <th>CÓD.</th>
+                            <th>Quantidade</th>
+                        </thead>
+                        <tbody id="consultantResumeSalesModalTableBody">
+
+                        </tbody>
+                    </table>
+
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">fechar</button>
+                    <button id="consultantConfirmUpdateBtn" type="button" class="btn btn-success">Atualizar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="tinkerResumeSalesModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1"
+        aria-labelledby="tinkerResumeSalesModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h1 class="modal-title fs-5" id="tinkerResumeSalesModalLabel">Vendas de: <span
+                            id="resumeTkName"></span>
+                    </h1>
+                </div>
+                <div class="modal-body">
+                    <table class="mt-5 table table-striped table-hover table-bordered border-dark">
+                        <thead class="table-light table-bordered border-dark">
+                            <th>CÓD.</th>
+                            <th>Quantidade</th>
+                        </thead>
+                        <tbody id="tinkerResumeSalesModalTableBody">
+
+                        </tbody>
+                    </table>
+
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">fechar</button>
+                    <button id="tinkerConfirmUpdateBtn" type="button" class="btn btn-success">Atualizar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="mechanicResumeSalesModal" data-bs-backdrop="static" data-bs-keyboard="false"
+        tabindex="-1" aria-labelledby="mechanicResumeSalesModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h1 class="modal-title fs-5" id="mechanicResumeSalesModalLabel">Vendas de: <span
+                            id="resumeMecName"></span>
+                    </h1>
+                </div>
+                <div class="modal-body">
+                    <table class="mt-5 table table-striped table-hover table-bordered border-dark">
+                        <thead class="table-light table-bordered border-dark">
+                            <th>CÓD.</th>
+                            <th>Quantidade</th>
+                        </thead>
+                        <tbody id="mechanicResumeSalesModalTableBody">
+
+                        </tbody>
+                    </table>
+
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">fechar</button>
+                    <button id="mechanicConfirmUpdateBtn" type="button" class="btn btn-success">Atualizar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="finalResumeSalesModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1"
+        aria-labelledby="finalResumeSalesModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h1 class="modal-title fs-5" id="finalResumeSalesModalLabel">Vendas de: <span
+                            id="finalResumeName"></span>
+                    </h1>
+                </div>
+                <div class="modal-body">
+                    <table class="mt-5 table table-striped table-hover table-bordered border-dark">
+                        <thead class="table-light table-bordered border-dark">
+                            <th>CÓD.</th>
+                            <th>Quantidade</th>
+                        </thead>
+                        <tbody id="finalResumeSalesModalTableBody">
+
+                        </tbody>
+                    </table>
+
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">fechar</button>
+                    <button id="finalSalesConfirmUpdateBtn" type="button" class="btn btn-success">Atualizar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="filterModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1"
+        aria-labelledby="filterModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h1 class="modal-title fs-5" id="filterModalLabel">Filtros</h1>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col">
+                            <label for="startDate">Data Inicial:</label> <input type="text" id="start"
+                                placeholder="Selecione a data inicial">
+                        </div>
+                        <div class="col">
+                            <label for="endDate">Data Final:</label> <input type="text" id="end"
+                                placeholder="Selecione a data final">
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <label class="form-label" for="userSelect">Representates</label>
+                        <select id="userSelect" name="userIds" multiple="multiple" class="form-control">
+                            <th:block sec:authorize="hasRole('ADMIN')">
+                                <option th:each="user : ${users}" th:value="${user.id}" th:text="${user.name}"></option>
+                            </th:block>
+                        </select>
+                    </div>
+
+                    <div class="row">
+                        <label class="form-label" for="customerSelect">Clientes</label>
+                        <select id="customerFilterSelect" name="customerIds" multiple class="form-control">
+                            <option th:each="customer: ${customers}" th:value="${customer.id}"
+                                th:text="${customer.fantasyName}">
+                            </option>
+                        </select>
+
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" id="filterButton" class="btn btn-primary">Filtrar</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="modal fade" id="errorModal" tabindex="-1" aria-labelledby="errorModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="errorModalLabel">Erro</h5>
+                </div>
+                <div class="modal-body">
+                    <p id="errorMessage"></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script th:src="@{/js/incentive.js}"></script>
+</body>
+
+</html>

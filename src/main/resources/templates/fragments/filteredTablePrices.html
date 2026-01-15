@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<title>Tabelas filtrados</title>
+</head>
+<body>
+	<div th:fragment="filtered-table-prices (tablePrices)">
+		<table class="table mt-3 table-straped" id="tableBody">
+			<thead>
+				<tr>
+					<th>Cliente</th>
+					<th>Produto</th>
+					<th>Preço</th>
+					<th>Ações</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr th:each="tablePrice : ${tablePrices}">
+					<td th:text="${tablePrice.customer.fantasyName}"></td>
+					<td
+						th:text="${tablePrice.product.productCode + '  ' + tablePrice.product.productName}"></td>
+					<td th:text="${tablePrice.price}"></td>
+					<td class="d-flex gap-2">
+						<button type="button" class="btn btn-info"
+							th:data-table-price-id="${tablePrice.id}" data-bs-toggle="modal"
+							data-bs-target="#viewTablePriceModal">Visualizar</button>
+						<button type="button" class="btn btn-warning"
+							th:data-table-price-id="${tablePrice.id}" data-bs-toggle="modal"
+							data-bs-target="#editTablePriceModal">Editar</button>
+					</td>
+				</tr>
+			</tbody>
+		</table>
+
+		<div class="d-flex justify-content-center mt-3">
+			<ul class="pagination">
+				<li class="page-item"
+					th:classappend="${currentPage == 0} ? 'disabled'"><a
+					class="page-link" href="#"
+					th:data-url="@{'/table-prices/filter'(
+             customers=${customerIds},
+             page=${currentPage - 1},
+             size=${size}
+           )}">
+						Anterior </a></li>
+				<li class="page-item"
+					th:each="i : ${#numbers.sequence(0, totalPages - 1)}"
+					th:classappend="${i == currentPage} ? 'active'"><a
+					class="page-link" href="#"
+					th:data-url="@{'/table-prices/filter'(
+             customers=${customerIds},
+             page=${i},
+             size=${size}
+           )}"
+					th:text="${i + 1}"> </a></li>
+				<li class="page-item"
+					th:classappend="${currentPage == totalPages - 1} ? 'disabled'">
+					<a class="page-link" href="#"
+					th:data-url="@{'/table-prices/filter'(
+             customers=${customerIds},
+             page=${currentPage + 1},
+             size=${size}
+           )}">
+						Próximo </a>
+				</li>
+			</ul>
+		</div>
+	</div>
+</body>
+</html>

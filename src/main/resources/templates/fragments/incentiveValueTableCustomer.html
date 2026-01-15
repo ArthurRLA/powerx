@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Valores de Incentivo</title>
+</head>
+<body>
+    <div th:fragment="incentiveValueTableFragment">
+        <h4 th:text="'Tipo de Apuração: ' + ${apurationType}"></h4>
+        <table class="table table-bordered table-striped">
+            <thead class="thead-dark">
+                <tr class="small">
+                    <th style="width: 35%">Produto</th>
+                    <th th:each="function : ${sortedFunctions}" 
+                        th:text="${function.name}"></th>
+                    <th>Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr class="small" th:each="product : ${sortedProducts}">
+                    <td th:text="${product.productCode + '  ' + product.productName}"></td>
+                    <td th:each="function : ${sortedFunctions}">
+                        <span th:if="${productFunctionValueMap.get(product)?.get(function) != null}"
+                              th:text="${#numbers.formatDecimal(productFunctionValueMap.get(product).get(function), 1, 'POINT', 2, 'COMMA')}">
+                        </span>
+                        <span th:unless="${productFunctionValueMap.get(product)?.get(function) != null}">-</span>
+                    </td>
+                    <td th:text="${#numbers.formatDecimal(productTotalMap.get(product), 1, 'POINT', 2, 'COMMA')}"></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>
