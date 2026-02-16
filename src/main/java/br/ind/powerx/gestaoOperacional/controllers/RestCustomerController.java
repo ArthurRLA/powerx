@@ -22,6 +22,7 @@ import br.ind.powerx.gestaoOperacional.model.dtos.CustomerProductStockItemsDto;
 import br.ind.powerx.gestaoOperacional.model.dtos.CustomerSetCurrentAccountDto;
 import br.ind.powerx.gestaoOperacional.model.dtos.CustomerTablePriceInfosDto;
 import br.ind.powerx.gestaoOperacional.model.dtos.DataNewSales;
+import br.ind.powerx.gestaoOperacional.model.dtos.EmployeeBasicDTO;
 import br.ind.powerx.gestaoOperacional.model.dtos.UserCustomersDto;
 import br.ind.powerx.gestaoOperacional.services.CustomerService;
 import br.ind.powerx.gestaoOperacional.util.ETagGenerator;
@@ -211,7 +212,18 @@ public class RestCustomerController {
 			e.printStackTrace();
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Cliente com id: '" + id + "' não encontrado");
 		}
+	}
 
+	@GetMapping("/{id}/employees-for-passage")
+	public ResponseEntity<?> getEmployeesForPassage(@PathVariable(name = "id") Long id) {
+		try {
+			List<EmployeeBasicDTO> employees = customerService.getEmployeesForPassage(id);
+			return ResponseEntity.ok(employees);
+		} catch (Exception e) {
+			e.printStackTrace();
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+					.body("Erro ao buscar funcionários: " + e.getMessage());
+		}
 	}
 
 }

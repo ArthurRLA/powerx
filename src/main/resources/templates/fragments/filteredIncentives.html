@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 
 <head>
 	<title>Incentivos filtrados</title>
@@ -13,7 +13,8 @@
 					<th scope="col">N° do Documento</th>
 					<th scope="col">Mês referência</th>
 					<th scope="col">Cliente</th>
-					<th scope="col">Detalhes</th>
+					<th scope="col">Status</th>
+					<th scope="col">Ações</th>
 				</tr>
 			</thead>
 			<tbody>
@@ -22,11 +23,32 @@
 					<td th:text="${entry.value.date}"></td>
 					<td th:text="${entry.value.customerName}"></td>
 					<td>
-						<button type="button" class="btn btn-secondary" th:data-document-number="${entry.key}"
-							onclick="loadDocumentDetails(this)">Detalhes</button>
-						<button sec:authorize="hasRole('ADMIN')" type="button" class="btn btn-warning"
+						<span th:if="${entry.value.status.name() == 'PENDING'}" class="badge bg-warning text-dark">
+							<i class="bi bi-clock"></i> Pendente
+						</span>
+						<span th:if="${entry.value.status.name() == 'APPROVED'}" class="badge bg-success">
+							<i class="bi bi-check-circle"></i> Aprovado
+						</span>
+					</td>
+					<td>
+						<button type="button" class="btn btn-secondary btn-sm" th:data-document-number="${entry.key}"
+							onclick="loadDocumentDetails(this)" title="Detalhes">
+							<i class="bi bi-info-circle"></i>
+						</button>
+						<button sec:authorize="hasRole('ADMIN')" type="button" class="btn btn-warning btn-sm"
 							th:data-document-number="${entry.key}"
-							onclick="loadDocumentDetailsToEdit(this)">Editar</button>
+							onclick="loadDocumentDetailsToEdit(this)" title="Editar">
+							<i class="bi bi-pencil"></i>
+						</button>
+						<button th:if="${entry.value.status.name() == 'PENDING'}" 
+								sec:authorize="hasRole('ADMIN')" 
+								type="button" 
+								class="btn btn-success btn-sm"
+								th:data-document-number="${entry.key}"
+								onclick="approveDocument(this.getAttribute('data-document-number'))" 
+								title="Aprovar">
+							<i class="bi bi-check"></i>
+						</button>
 					</td>
 				</tr>
 			</tbody>
@@ -39,6 +61,7 @@
              end=${end},
              userIds=${userIds},
              customerIds=${customerIds},
+             status=${status},
              page=${currentPage - 1},
              size=${size}
            )}">
@@ -49,6 +72,7 @@
              end=${end},
              userIds=${userIds},
              customerIds=${customerIds},
+             status=${status},
              page=${i},
              size=${size}
            )}" th:text="${i + 1}"> </a></li>
@@ -58,6 +82,7 @@
              end=${end},
              userIds=${userIds},
              customerIds=${customerIds},
+             status=${status},
              page=${currentPage + 1},
              size=${size}
            )}">

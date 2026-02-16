@@ -22,9 +22,9 @@ import br.ind.powerx.gestaoOperacional.model.Sale;
 import br.ind.powerx.gestaoOperacional.model.dtos.EmployeeDTO;
 import br.ind.powerx.gestaoOperacional.model.dtos.EmployeeSaleDto;
 import br.ind.powerx.gestaoOperacional.model.dtos.ProductDTO;
-import br.ind.powerx.gestaoOperacional.model.dtos.ProductSaleDto;
+import br.ind.powerx.gestaoOperacional.model.dtos.ProductSaleDTO;
+import br.ind.powerx.gestaoOperacional.model.dtos.SaleDTO;
 import br.ind.powerx.gestaoOperacional.model.dtos.SaleDetailsToUpdateDto;
-import br.ind.powerx.gestaoOperacional.model.dtos.SaleDto;
 import br.ind.powerx.gestaoOperacional.model.dtos.UpdateSaleDto;
 import br.ind.powerx.gestaoOperacional.model.dtos.UpdateSaleItemDTO;
 import br.ind.powerx.gestaoOperacional.model.dtos.report.instructions.SaleCustomerReportInstructions;
@@ -57,20 +57,27 @@ public class SaleService {
 	private final CalculeIncentiveService calculeIncentiveService;
 
 	private final IncentiveRepository incentiveRepository;
+	
+	private final ProductStockService productStockService;
+	
+	private final CurrentAccountService currentAccountService;
 
 	@Autowired
 	public SaleService(SaleRepository saleRepository, CustomerRepository customerRepository,
 			EmployeeRepository empRepository, ProductRepository productRepository,
-			CalculeIncentiveService calculeIncentiveService, IncentiveRepository incentiveRepository) {
+			CalculeIncentiveService calculeIncentiveService, IncentiveRepository incentiveRepository,
+			ProductStockService productStockService, CurrentAccountService currentAccountService) {
 		this.saleRepository = saleRepository;
 		this.customerRepository = customerRepository;
 		this.empRepository = empRepository;
 		this.productRepository = productRepository;
 		this.calculeIncentiveService = calculeIncentiveService;
 		this.incentiveRepository = incentiveRepository;
+		this.productStockService = productStockService;
+		this.currentAccountService = currentAccountService;
 	}
 
-	public List<Incentive> saveSales(List<SaleDto> salesDto) {
+	public List<Incentive> saveSales(List<SaleDTO> salesDto) {
 		logger.info("Iniciando processamento de {} vendas.", salesDto.size());
 
 		Integer maxDocumentNumeber = saleRepository.findMaxDocumentNumber();
@@ -80,7 +87,7 @@ public class SaleService {
 		logger.debug("Novo número de documento de venda calculado: {}", newDocumentNumeber);
 
 		List<Sale> sales = new ArrayList<>();
-		for (SaleDto sale : salesDto) {
+		for (SaleDTO sale : salesDto) {
 			if (sale.getCustomer() == null) {
 				logger.error("O id do cliente não pode ser nulo para a venda: {}", sale);
 				throw new NullPointerException("O id do cliente não pode ser nulo");
@@ -102,7 +109,7 @@ public class SaleService {
 			});
 
 			Map<Product, Integer> productAndQuantity = new HashMap<>();
-			for (ProductSaleDto product : sale.getProducts()) {
+			for (ProductSaleDTO product : sale.getProducts()) {
 				if (product.getProductId() == null) {
 					logger.error("O id do produto não pode ser nulo na venda: {}", sale);
 					throw new NullPointerException("O id do produto não pode ser nulo");
@@ -464,9 +471,32 @@ public class SaleService {
 					"Nenhuma venda ou incentivo encontrado para o documento: " + documentNumber);
 		}
 
+		boolean wasApproved = incentives.stream()
+			.anyMatch(i -> i.getStatus() == br.ind.powerx.gestaoOperacional.model.enums.IncentiveStatus.APPROVED);
+		
+		Customer customer = null;
+		if (!sales.isEmpty()) {
+			customer = sales.get(0).getCustomer();
+		} else if (!incentives.isEmpty()) {
+			customer = incentives.get(0).getCustomer();
+		}
+
 		try {
+			if (wasApproved && customer != null && !sales.isEmpty()) {
+				logger.info("Devolvendo produtos ao estoque (documento estava aprovado)");
+				for (Sale sale : sales) {
+					productStockService.addToStock(customer, sale.getProduct(), sale.getQuantity());
+				}
+				logger.info("Produtos devolvidos ao estoque com sucesso");
+				
+				currentAccountService.updateCurrentAccount(customer);
+				logger.info("Conta corrente recalculada após deleção");
+			}
+			
 			saleRepository.deleteAll(sales);
 			incentiveRepository.deleteAll(incentives);
+			
+			logger.info("Documento {} deletado com sucesso", documentNumber);
 		} catch (Exception e) {
 			throw new RuntimeException("Erro ao deletar vendas/incentivos: " + e.getMessage(), e);
 		}

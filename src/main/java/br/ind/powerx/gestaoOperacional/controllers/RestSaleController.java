@@ -18,7 +18,7 @@ import br.ind.powerx.gestaoOperacional.model.Customer;
 import br.ind.powerx.gestaoOperacional.model.Incentive;
 import br.ind.powerx.gestaoOperacional.model.dtos.IncentiveCalculatedDTO;
 import br.ind.powerx.gestaoOperacional.model.dtos.SaleDetailsToUpdateDto;
-import br.ind.powerx.gestaoOperacional.model.dtos.SaleDto;
+import br.ind.powerx.gestaoOperacional.model.dtos.SaleDTO;
 import br.ind.powerx.gestaoOperacional.model.dtos.UpdateSaleDto;
 import br.ind.powerx.gestaoOperacional.repositories.CustomerRepository;
 import br.ind.powerx.gestaoOperacional.services.IncentiveMapper;
@@ -42,7 +42,7 @@ public class RestSaleController {
 
     @PostMapping
     public ResponseEntity<?> saveSales(
-            @RequestBody(required = true) List<SaleDto> salesDtos) {
+            @RequestBody(required = true) List<SaleDTO> salesDtos) {
         logger.info("Recebida requisição para salvar vendas com {} registros.", salesDtos.size());
 
         try {

@@ -18,6 +18,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -29,6 +30,7 @@ import br.ind.powerx.gestaoOperacional.model.dtos.DocumentDetailsDto;
 import br.ind.powerx.gestaoOperacional.services.AuthenticationService;
 import br.ind.powerx.gestaoOperacional.services.CustomerService;
 import br.ind.powerx.gestaoOperacional.services.DocumentService;
+import br.ind.powerx.gestaoOperacional.services.IncentiveService;
 import br.ind.powerx.gestaoOperacional.services.UserService;
 
 @Controller
@@ -42,14 +44,17 @@ public class IncentiveController {
 	private final AuthenticationService authenticationService;
 
 	private final UserService userService;
+	
+	private final IncentiveService incentiveService;
 
 	@Autowired
 	public IncentiveController(DocumentService documentService, CustomerService customerService,
-			AuthenticationService authenticationService, UserService userService) {
+			AuthenticationService authenticationService, UserService userService, IncentiveService incentiveService) {
 		this.documentService = documentService;
 		this.customerService = customerService;
 		this.authenticationService = authenticationService;
 		this.userService = userService;
+		this.incentiveService = incentiveService;
 	}
 
 	@GetMapping
@@ -117,6 +122,7 @@ public class IncentiveController {
 			@RequestParam(value = "end", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate end,
 			@RequestParam(value = "userIds", required = false) List<Long> userIds,
 			@RequestParam(value = "customerIds", required = false) List<Long> customerIds,
+			@RequestParam(value = "status", required = false) String status,
 			Model model) {
 		User user = authenticationService.getUserAuthenticated();
 		boolean isAdmin = user.getRole().equalsIgnoreCase("role_admin");
@@ -126,7 +132,7 @@ public class IncentiveController {
 
 		try {
 			Page<Map.Entry<Integer, CustomerDate>> pageEntries = documentService.getPageDoucmentFiltered(page, size,
-					start, end, userIdsToFilter, customerIds);
+					start, end, userIdsToFilter, customerIds, status);
 			Map<Integer, CustomerDate> pagedMap = pageEntries.getContent().stream()
 					.collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (u, v) -> u, LinkedHashMap::new));
 
@@ -138,6 +144,7 @@ public class IncentiveController {
 			model.addAttribute("end", end);
 			model.addAttribute("userIds", userIds);
 			model.addAttribute("customerIds", customerIds);
+			model.addAttribute("status", status);
 			model.addAttribute("size", size);
 
 			return "fragments/filteredIncentives :: filteredIncentives";
@@ -156,6 +163,7 @@ public class IncentiveController {
 			@RequestParam(value = "end", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate end,
 			@RequestParam(value = "userIds", required = false) List<Long> userIds,
 			@RequestParam(value = "customerIds", required = false) List<Long> customerIds,
+			@RequestParam(value = "status", required = false) String status,
 			Model model) {
 		User user = authenticationService.getUserAuthenticated();
 		boolean isAdmin = user.getRole().equalsIgnoreCase("role_admin");
@@ -185,12 +193,47 @@ public class IncentiveController {
 			model.addAttribute("end", end);
 			model.addAttribute("userIds", userIds);
 			model.addAttribute("customerIds", customerIds);
+			model.addAttribute("status", status);
 			model.addAttribute("size", size);
 
 			return "fragments/filteredIncentives :: filteredIncentives";
 		} catch (Exception e) {
 			model.addAttribute("error", e.getMessage());
 			return "incentive-launch";
+		}
+	}
+	
+	@PostMapping("/approve/{saleDocumentNumber}")
+	@ResponseBody
+	public ResponseEntity<?> approveIncentiveByDocument(@PathVariable Integer saleDocumentNumber) {
+		try {
+			incentiveService.approveIncentiveByDocumentNumber(saleDocumentNumber);
+			return ResponseEntity.ok().body("Incentivos aprovados com sucesso");
+		} catch (IllegalStateException e) {
+			return ResponseEntity.badRequest().body(e.getMessage());
+		} catch (IllegalArgumentException e) {
+			return ResponseEntity.notFound().build();
+		} catch (Exception e) {
+			e.printStackTrace();
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+					.body("Erro ao aprovar incentivos: " + e.getMessage());
+		}
+	}
+	
+	@PostMapping("/approve/document/{documentNumber}")
+	@ResponseBody
+	public ResponseEntity<?> approveDocument(@PathVariable Integer documentNumber) {
+		try {
+			incentiveService.approveIncentiveByDocumentNumber(documentNumber);
+			return ResponseEntity.ok().body("Documento aprovado com sucesso");
+		} catch (IllegalStateException e) {
+			return ResponseEntity.badRequest().body(e.getMessage());
+		} catch (IllegalArgumentException e) {
+			return ResponseEntity.notFound().build();
+		} catch (Exception e) {
+			e.printStackTrace();
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+					.body("Erro ao aprovar documento: " + e.getMessage());
 		}
 	}
 

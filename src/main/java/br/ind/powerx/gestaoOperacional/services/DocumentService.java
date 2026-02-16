@@ -34,6 +34,7 @@ import br.ind.powerx.gestaoOperacional.model.dtos.DocumentDetailsProductResume;
 import br.ind.powerx.gestaoOperacional.model.dtos.DocumentDetailsSale;
 import br.ind.powerx.gestaoOperacional.model.dtos.DocumentDetailsSaleProduct;
 import br.ind.powerx.gestaoOperacional.model.dtos.IncentiveDTO;
+import br.ind.powerx.gestaoOperacional.model.enums.IncentiveStatus;
 import br.ind.powerx.gestaoOperacional.model.enums.State;
 import br.ind.powerx.gestaoOperacional.repositories.IncentiveRepository;
 import br.ind.powerx.gestaoOperacional.repositories.SaleRepository;
@@ -263,14 +264,22 @@ public class DocumentService {
 			Customer customer = incentives.get(0).getCustomer();
 			String customerName = customer.getFantasyName();
 			LocalDate date = incentives.get(0).getReferenceDate();
-			CustomerDate customerDate = new CustomerDate(customerName, date);
+			
+			boolean hasPending = incentives.stream()
+				.anyMatch(i -> i.getStatus() == br.ind.powerx.gestaoOperacional.model.enums.IncentiveStatus.PENDING);
+			
+			IncentiveStatus documentStatus = 
+				hasPending ? IncentiveStatus.PENDING 
+						  : IncentiveStatus.APPROVED;
+			
+			CustomerDate customerDate = new CustomerDate(customerName, date, documentStatus);
 			documentCustomer.put(documentNumber, customerDate);
 		}
 		return documentCustomer;
 	}
 
 	public Page<Entry<Integer, CustomerDate>> getPageDoucmentFiltered(int page, int size, LocalDate start,
-			LocalDate end, List<Long> userIds, List<Long> customerIds) {
+			LocalDate end, List<Long> userIds, List<Long> customerIds, String status) {
 
 		Specification<Incentive> spec = Specification.where(null);
 
@@ -294,6 +303,17 @@ public class DocumentService {
 		sortedDocumentNumbers.sort(Comparator.reverseOrder());
 
 		Map<Integer, CustomerDate> fullMap = getCustomersByDocument(sortedDocumentNumbers);
+		
+		if (status != null && !status.isEmpty()) {
+			fullMap = fullMap.entrySet().stream()
+				.filter(entry -> entry.getValue().getStatus().name().equals(status))
+				.collect(Collectors.toMap(
+					Map.Entry::getKey,
+					Map.Entry::getValue,
+					(e1, e2) -> e1,
+					LinkedHashMap::new
+				));
+		}
 
 		List<Map.Entry<Integer, CustomerDate>> entries = new ArrayList<>(fullMap.entrySet());
 

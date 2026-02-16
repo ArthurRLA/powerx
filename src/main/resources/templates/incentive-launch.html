@@ -43,6 +43,7 @@
                                 <th scope="col">N° do Documento</th>
                                 <th scope="col">Mês referência</th>
                                 <th scope="col">Cliente</th>
+                                <th scope="col">Status</th>
                                 <th scope="col">Detalhes</th>
                             </tr>
                         </thead>
@@ -52,12 +53,32 @@
                                 <td th:text="${entry.value.date}"></td>
                                 <td th:text="${entry.value.customerName}"></td>
                                 <td>
-                                    <button type="button" class="btn btn-secondary"
+                                    <span th:if="${entry.value.status.name() == 'PENDING'}"
+                                        class="badge bg-warning text-dark">
+                                        <i class="bi bi-clock"></i> Pendente
+                                    </span>
+                                    <span th:if="${entry.value.status.name() == 'APPROVED'}" class="badge bg-success">
+                                        <i class="bi bi-check-circle"></i> Aprovado
+                                    </span>
+                                </td>
+                                <td>
+                                    <button type="button" class="btn btn-secondary btn-sm"
+                                        th:data-document-number="${entry.key}" onclick="loadDocumentDetails(this)"
+                                        title="Detalhes">
+                                        <i class="bi bi-info-circle"></i>
+                                    </button>
+                                    <button sec:authorize="hasRole('ADMIN')" type="button"
+                                        class="btn btn-warning btn-sm" th:data-document-number="${entry.key}"
+                                        onclick="loadDocumentDetailsToEdit(this)" title="Editar">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+                                    <button th:if="${entry.value.status.name() == 'PENDING'}"
+                                        sec:authorize="hasRole('ADMIN')" type="button" class="btn btn-success btn-sm"
                                         th:data-document-number="${entry.key}"
-                                        onclick="loadDocumentDetails(this)">Detalhes</button>
-                                    <button sec:authorize="hasRole('ADMIN')" type="button" class="btn btn-warning"
-                                        th:data-document-number="${entry.key}"
-                                        onclick="loadDocumentDetailsToEdit(this)">Editar</button>
+                                        onclick="approveDocument(this.getAttribute('data-document-number'))"
+                                        title="Aprovar">
+                                        <i class="bi bi-check"></i>
+                                    </button>
                                 </td>
                             </tr>
                         </tbody>
@@ -104,7 +125,8 @@
                                 </div>
                                 <div class="col">
                                     <p><strong>Total de Vendas: </strong><span id="documentInfosSalesTotal"></span></p>
-                                    <p><strong>Total de Funilaria: </strong><span id="documentInfosTinkerTotal"></span></p>
+                                    <p><strong>Total de Funilaria: </strong><span id="documentInfosTinkerTotal"></span>
+                                    </p>
                                     <p><strong>Total de Aplicações: </strong><span
                                             id="documentInfosAplicationsTotal"></span></p>
                                 </div>
@@ -895,7 +917,15 @@
                                 th:text="${customer.fantasyName}">
                             </option>
                         </select>
+                    </div>
 
+                    <div class="row mt-3">
+                        <label class="form-label" for="statusSelect">Status</label>
+                        <select id="statusSelect" name="status" class="form-control">
+                            <option value="">Todos</option>
+                            <option value="PENDING">Pendente</option>
+                            <option value="APPROVED">Aprovado</option>
+                        </select>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -931,3 +961,87 @@
 </body>
 
 </html>
+
+<!-- Modal de Confirmação de Aprovação -->
+<div class="modal fade" id="confirmApprovalModal" tabindex="-1" aria-labelledby="confirmApprovalModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="confirmApprovalModalLabel">Confirmar Aprovação</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Tem certeza que deseja aprovar todos os incentivos do documento <strong
+                        id="documentNumberToApprove"></strong>?</p>
+                <p class="text-warning"><strong>Atenção:</strong> Esta ação irá:</p>
+                <ul>
+                    <li>Subtrair as quantidades vendidas do estoque do cliente</li>
+                    <li>Recalcular a conta corrente do cliente</li>
+                    <li>Alterar o status de todos os incentivos para "Aprovado"</li>
+                </ul>
+                <p class="text-danger"><strong>Esta operação não pode ser desfeita!</strong></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-success" id="confirmApprovalBtn">Confirmar Aprovação</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let documentNumberToApprove = null;
+
+    function approveIncentive(documentNumber) {
+        documentNumberToApprove = documentNumber;
+        document.getElementById('documentNumberToApprove').textContent = documentNumber;
+        const modal = new bootstrap.Modal(document.getElementById('confirmApprovalModal'));
+        modal.show();
+    }
+
+    document.getElementById('confirmApprovalBtn').addEventListener('click', function () {
+        if (documentNumberToApprove) {
+            const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+            const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
+
+            // Desabilitar o botão para evitar cliques duplos
+            this.disabled = true;
+            this.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Aprovando...';
+
+            fetch(`/incentives/approve/${documentNumberToApprove}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    [csrfHeader]: csrfToken
+                }
+            })
+                .then(response => {
+                    if (response.ok) {
+                        return response.text();
+                    } else {
+                        return response.text().then(text => {
+                            throw new Error(text || 'Erro ao aprovar incentivos');
+                        });
+                    }
+                })
+                .then(message => {
+                    alert('Incentivos aprovados com sucesso!');
+                    location.reload();
+                })
+                .catch(error => {
+                    alert('Erro ao aprovar incentivos: ' + error.message);
+                    // Reabilitar o botão em caso de erro
+                    document.getElementById('confirmApprovalBtn').disabled = false;
+                    document.getElementById('confirmApprovalBtn').innerHTML = 'Confirmar Aprovação';
+                })
+                .finally(() => {
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('confirmApprovalModal'));
+                    if (modal) {
+                        modal.hide();
+                    }
+                    documentNumberToApprove = null;
+                });
+        }
+    });
+</script>

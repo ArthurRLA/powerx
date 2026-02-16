@@ -12,10 +12,10 @@ import lombok.Setter;
 @Getter
 @Setter
 
-public class SaleDto {
+public class SaleDTO {
 
     private Long customer;
     private Long employee;
     private String function;
-    private List<ProductSaleDto> products;
+    private List<ProductSaleDTO> products;
 }

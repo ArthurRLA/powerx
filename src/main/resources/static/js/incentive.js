@@ -139,7 +139,7 @@ function initializeSelect2() {
 
     $('#filterModal').on('shown.bs.modal', function () {
         const $modal = $(this);
-        ['#customerFilterSelect', '#userSelect'].forEach(selector => {
+        ['#customerFilterSelect', '#userSelect', '#statusSelect'].forEach(selector => {
             $modal.find(selector).select2({
                 placeholder: $(selector).attr('placeholder') || '',
                 dropdownParent: $modal,
@@ -1684,12 +1684,13 @@ filterButton.addEventListener('click', async () => {
     const end = document.getElementById('end').value;
     const userIds = Array.from(document.getElementById('userSelect').selectedOptions).map(opt => opt.value);
     const customerIds = Array.from(document.getElementById('customerFilterSelect').selectedOptions).map(opt => opt.value);
-
+    const status = document.getElementById('statusSelect').value;
 
     url.searchParams.set("start", start);
     url.searchParams.set("end", end);
     url.searchParams.set("userIds", userIds);
     url.searchParams.set("customerIds", customerIds);
+    url.searchParams.set("status", status);
 
     console.log(url.toString());
 
@@ -2689,4 +2690,30 @@ function eraseTinkerInfos() {
     tinkerResumeSalesModalTableBody.innerHTML = '';
     tinkerResumeSalesTableBody.innerHTML = '';
     setMessageDisplay(noTinkerAvailable, tinkerModalBody, false);
+}
+function approveDocument(documentNumber) {
+    if (confirm('Tem certeza que deseja aprovar este documento? Esta ação irá:\n\n• Subtrair as quantidades vendidas do estoque do cliente\n• Recalcular a conta corrente do cliente\n• Alterar o status de todos os incentivos do documento para "Aprovado"')) {
+
+        fetch(`/incentives/approve/document/${documentNumber}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                [csrfHeader]: csrfToken
+            }
+        })
+            .then(response => {
+                if (response.ok) {
+                    return response.text();
+                } else {
+                    throw new Error('Erro ao aprovar documento');
+                }
+            })
+            .then(message => {
+                alert('Documento aprovado com sucesso!');
+                location.reload();
+            })
+            .catch(error => {
+                alert('Erro ao aprovar documento: ' + error.message);
+            });
+    }
 }

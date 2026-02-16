@@ -11,7 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import br.ind.powerx.gestaoOperacional.model.Customer;
-import br.ind.powerx.gestaoOperacional.model.dtos.SaleDto;
+import br.ind.powerx.gestaoOperacional.model.dtos.SaleDTO;
 import br.ind.powerx.gestaoOperacional.model.dtos.UpdateSaleDto;
 import br.ind.powerx.gestaoOperacional.model.dtos.UpdateSaleItemDTO;
 
@@ -19,7 +19,7 @@ public class SaleQuantityValidator {
 
     private static final Logger logger = LoggerFactory.getLogger(SaleQuantityValidator.class);
 
-    public static boolean check(List<SaleDto> salesDtos, Customer customer) {
+    public static boolean check(List<SaleDTO> salesDtos, Customer customer) {
         if (customer.getMechanicApuration().getName().equals("Somente mecânicos"))
             return true;
 
@@ -91,6 +91,7 @@ public class SaleQuantityValidator {
         logger.info("Iniciando verificação de quantidades por função...");
 
         List<UpdateSaleItemDTO> consultants = updateSaleDto.getConsultantSales();
+        consultants.addAll(updateSaleDto.getTinkerSales());
         List<UpdateSaleItemDTO> mechanics = updateSaleDto.getConsultantSales();
 
         Map<Long, Integer> consultantProductPerQuantity = consultants.stream()

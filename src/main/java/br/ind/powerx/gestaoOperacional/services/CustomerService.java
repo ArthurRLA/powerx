@@ -41,6 +41,7 @@ import br.ind.powerx.gestaoOperacional.model.dtos.CustomerTablePriceInfosDto;
 import br.ind.powerx.gestaoOperacional.model.dtos.CustomerUniqueInfos;
 import br.ind.powerx.gestaoOperacional.model.dtos.CustomerUpdateDTO;
 import br.ind.powerx.gestaoOperacional.model.dtos.DataNewSales;
+import br.ind.powerx.gestaoOperacional.model.dtos.EmployeeBasicDTO;
 import br.ind.powerx.gestaoOperacional.model.dtos.EmployeeDTO;
 import br.ind.powerx.gestaoOperacional.model.dtos.FlagDTO;
 import br.ind.powerx.gestaoOperacional.model.dtos.GroupDto;
@@ -510,7 +511,28 @@ public class CustomerService {
 
 				})
 				.orElseThrow(() -> new EntityNotFoundException("Cliente com Id: " + id + " não encontrado"));
+	}
 
+	public List<EmployeeBasicDTO> getEmployeesForPassage(Long customerId) {
+		Customer customer = customerRepository.findById(customerId)
+				.orElseThrow(() -> new EntityNotFoundException("Cliente não encontrado"));
+
+		String mechanicApurationName = Optional.ofNullable(customer.getMechanicApuration())
+				.map(MechanicApuration::getName)
+				.orElse("");
+
+		String functionToSearch;
+		if ("Somente mecânicos".equalsIgnoreCase(mechanicApurationName)) {
+			functionToSearch = "Mecânico";
+		} else {
+			functionToSearch = "Consultor Técnico";
+		}
+
+		return customer.getEmployees().stream()
+				.filter(e -> e.getFunctions().stream()
+						.anyMatch(f -> f.getName().equalsIgnoreCase(functionToSearch)))
+				.map(e -> new EmployeeBasicDTO(e.getId(), e.getName(), e.getCpf()))
+				.collect(Collectors.toList());
 	}
 
 }

@@ -23,6 +23,7 @@ import br.ind.powerx.gestaoOperacional.model.IncentiveValue;
 import br.ind.powerx.gestaoOperacional.model.Product;
 import br.ind.powerx.gestaoOperacional.model.Sale;
 import br.ind.powerx.gestaoOperacional.model.User;
+import br.ind.powerx.gestaoOperacional.model.enums.IncentiveStatus;
 import br.ind.powerx.gestaoOperacional.repositories.ApurationTypeRepository;
 import br.ind.powerx.gestaoOperacional.repositories.FunctionRepository;
 import br.ind.powerx.gestaoOperacional.repositories.IncentiveRepository;
@@ -40,17 +41,22 @@ public class CalculeIncentiveService {
     private final ApurationTypeRepository apurationTypeRepository;
     private final AuthenticationService authenticationService;
     private final FunctionRepository functionRepository;
+    private final ProductStockService productStockService;
+    private final CurrentAccountService currentAccountService;
 
     @Autowired
     public CalculeIncentiveService(SaleRepository saleRepository, IncentiveRepository incentiveRepository,
             IncentiveValueRepository incentiveValueRepository, ApurationTypeRepository apurationTypeRepository,
-            AuthenticationService authenticationService, FunctionRepository functionRepository) {
+            AuthenticationService authenticationService, FunctionRepository functionRepository,
+            ProductStockService productStockService, CurrentAccountService currentAccountService) {
         this.saleRepository = saleRepository;
         this.incentiveRepository = incentiveRepository;
         this.incentiveValueRepository = incentiveValueRepository;
         this.apurationTypeRepository = apurationTypeRepository;
         this.authenticationService = authenticationService;
         this.functionRepository = functionRepository;
+        this.productStockService = productStockService;
+        this.currentAccountService = currentAccountService;
     }
 
     public List<Incentive> calculateIncentives(List<Sale> sales) {
@@ -181,14 +187,15 @@ public class CalculeIncentiveService {
             if (isRelevantFunction(function)) {
                 if ((function.getName().equals("Consultor Técnico") && sale.getFunction().equals("Consultor Técnico"))
                         || (function.getName().equals("Mecânico") && sale.getFunction().equals("Mecânico"))
-                        || (function.getName().equals("Consultor de Funilaria") && sale.getFunction().equals("Consultor de Funilaria"))) {
+                        || (function.getName().equals("Consultor de Funilaria")
+                                && sale.getFunction().equals("Consultor de Funilaria"))) {
 
                     Function functionToUse = function;
-                    
-                    if(function.getName().equals("Consultor de Funilaria")){
+
+                    if (function.getName().equals("Consultor de Funilaria")) {
                         functionToUse = functionRepository.findByName("Consultor Técnico").get();
                     }
-                    
+
                     logger.debug("Processando função relevante: {}", function.getName());
                     IncentiveValue value = incentiveValueRepository.findByCustomerAndProductAndFunction(customer,
                             product, functionToUse);
@@ -244,13 +251,13 @@ public class CalculeIncentiveService {
                             totalQuantity = calculateMechanicTotalQuantity(sales, product, customer);
                         }
 
-                        if(!function.getName().equals("Chefe de Oficina")){
+                        if (!function.getName().equals("Chefe de Oficina")) {
                             totalQuantity += calculateTinkerTotalQuantity(sales, product, customer);
                         }
 
                         Function funtionToUse = function;
 
-                        if(function.getName().equals("Supervisor de Funilaria")){
+                        if (function.getName().equals("Supervisor de Funilaria")) {
                             funtionToUse = functionRepository.findByName("Chefe de Oficina").get();
                             totalQuantity = calculateTinkerTotalQuantity(sales, product, customer);
                         }
@@ -298,7 +305,8 @@ public class CalculeIncentiveService {
             for (Employee emp : mechanics) {
                 for (Product product : customer.getGroup().getProducts()) {
                     for (Function function : emp.getFunctions()) {
-                        int totalQuantity = calculateConsultantTotalQuantity(sales, product, customer) + calculateTinkerTotalQuantity(sales, product, customer);
+                        int totalQuantity = calculateConsultantTotalQuantity(sales, product, customer)
+                                + calculateTinkerTotalQuantity(sales, product, customer);
                         BigDecimal mechanicQuantity = new BigDecimal(mechanics.size());
                         logger.debug("Para Mecânico: {}, Produto: {} - {}, Quantidade: {}, Número de mecânicos: {}",
                                 emp.getName(), product.getProductCode(), product.getProductName(), totalQuantity,
@@ -348,7 +356,7 @@ public class CalculeIncentiveService {
             Incentive incCc = new Incentive(null, LocalDate.now().minusMonths(1), user.getState(),
                     employee.getPaymentMethod(),
                     apurationTypes.get("Conta Corrente"), employee, employee.getCpf(), ccValue, function, customer,
-                    saleOrdem, user);
+                    saleOrdem, IncentiveStatus.PENDING, user);
             incentives.add(incCc);
             logger.debug("Incentivo CC criado: {}", incCc);
         }
@@ -356,7 +364,7 @@ public class CalculeIncentiveService {
             Incentive incNfs = new Incentive(null, LocalDate.now().minusMonths(1), user.getState(),
                     employee.getPaymentMethod(),
                     apurationTypes.get("NF Serviço"), employee, employee.getCpf(), nfsValue, function, customer,
-                    saleOrdem, user);
+                    saleOrdem, IncentiveStatus.PENDING, user);
             incentives.add(incNfs);
             logger.debug("Incentivo NFS criado: {}", incNfs);
         }
@@ -429,6 +437,24 @@ public class CalculeIncentiveService {
         Customer customer = allNewSales.get(0).getCustomer();
         User user = customer.getUser();
 
+        List<Sale> oldSales = saleRepository.findByDocumentNumber(documentNumber);
+        List<Incentive> oldIncentives = incentiveRepository.findBySaleDocumentNumber(documentNumber);
+
+        boolean wasApproved = oldIncentives.stream()
+                .anyMatch(i -> i.getStatus() == br.ind.powerx.gestaoOperacional.model.enums.IncentiveStatus.APPROVED);
+
+        if (wasApproved && !oldSales.isEmpty()) {
+            logger.info("Revertendo estoque das vendas antigas (documento estava aprovado)");
+            for (Sale oldSale : oldSales) {
+                productStockService.addToStock(customer, oldSale.getProduct(), oldSale.getQuantity());
+            }
+            logger.info("Estoque revertido com sucesso");
+        }
+
+        if (wasApproved) {
+            validateStockForNewSales(customer, allNewSales);
+        }
+
         List<Incentive> incentives = new ArrayList<>();
 
         Map<String, ApurationType> apurationTypes = preloadApurationTypes();
@@ -443,11 +469,51 @@ public class CalculeIncentiveService {
 
         List<Incentive> incentivesCompacted = compactIncentives(incentives, apurationTypes);
 
+        // Definir status como PENDING para todos os novos incentivos
+        incentivesCompacted.forEach(
+                incentive -> incentive.setStatus(br.ind.powerx.gestaoOperacional.model.enums.IncentiveStatus.PENDING));
+
         saleRepository.deleteByDocumentNumber(documentNumber);
         incentiveRepository.deleteAllBySaleDocumentNumber(documentNumber);
 
         saleRepository.saveAll(allNewSales);
         incentiveRepository.saveAll(incentivesCompacted);
+
+        // Recalcular conta corrente
+        currentAccountService.updateCurrentAccount(customer);
+
+        logger.info("Incentivos atualizados com sucesso. Status: PENDING");
+    }
+
+    private void validateStockForNewSales(Customer customer, List<Sale> newSales) {
+        if (customer.getProductStock() == null) {
+            throw new IllegalStateException("Cliente não possui estoque cadastrado");
+        }
+
+        // Agrupar vendas por produto para somar quantidades
+        Map<Product, Integer> salesByProduct = newSales.stream()
+                .collect(Collectors.groupingBy(
+                        Sale::getProduct,
+                        Collectors.summingInt(Sale::getQuantity)));
+
+        // Verificar se há estoque suficiente para cada produto
+        for (Map.Entry<Product, Integer> entry : salesByProduct.entrySet()) {
+            Product product = entry.getKey();
+            Integer quantityNeeded = entry.getValue();
+
+            // Buscar quantidade atual no estoque
+            Integer currentStock = customer.getProductStock().getProductStockItems().stream()
+                    .filter(item -> item.getProduct().equals(product))
+                    .mapToInt(item -> item.getQuantity())
+                    .sum();
+
+            if (currentStock < quantityNeeded) {
+                throw new IllegalStateException(
+                        String.format("Estoque insuficiente para o produto '%s'. " +
+                                "Estoque atual: %d, Quantidade necessária: %d",
+                                product.getProductName(), currentStock, quantityNeeded));
+            }
+        }
     }
 
     private List<Incentive> updateIncentivesForSale(Sale sale, Map<String, ApurationType> apurationTypes,
@@ -465,11 +531,12 @@ public class CalculeIncentiveService {
             if (isRelevantFunction(function)) {
                 if ((function.getName().equals("Consultor Técnico") && sale.getFunction().equals("Consultor Técnico"))
                         || (function.getName().equals("Mecânico") && sale.getFunction().equals("Mecânico")
-                        || (function.getName().equals("Consultor de Funilaria") && sale.getFunction().equals("Consultor de Funilaria")))) {
+                                || (function.getName().equals("Consultor de Funilaria")
+                                        && sale.getFunction().equals("Consultor de Funilaria")))) {
 
                     Function functionToUse = function;
-                    
-                    if(function.getName().equals("Consultor de Funilaria")){
+
+                    if (function.getName().equals("Consultor de Funilaria")) {
                         functionToUse = functionRepository.findByName("Consultor Técnico").get();
                     }
 
@@ -529,13 +596,13 @@ public class CalculeIncentiveService {
                             totalQuantity = calculateMechanicTotalQuantity(sales, product, customer);
                         }
 
-                        if(!function.getName().equals("Chefe de Oficina")){
+                        if (!function.getName().equals("Chefe de Oficina")) {
                             totalQuantity += calculateTinkerTotalQuantity(sales, product, customer);
                         }
 
                         Function funtionToUse = function;
 
-                        if(function.getName().equals("Supervisor de Funilaria")){
+                        if (function.getName().equals("Supervisor de Funilaria")) {
                             funtionToUse = functionRepository.findByName("Chefe de Oficina").get();
                             totalQuantity = calculateTinkerTotalQuantity(sales, product, customer);
                         }
@@ -583,7 +650,8 @@ public class CalculeIncentiveService {
             for (Employee emp : mechanics) {
                 for (Product product : customer.getGroup().getProducts()) {
                     for (Function function : emp.getFunctions()) {
-                        int totalQuantity = calculateConsultantTotalQuantity(sales, product, customer) + calculateTinkerTotalQuantity(sales, product, customer);
+                        int totalQuantity = calculateConsultantTotalQuantity(sales, product, customer)
+                                + calculateTinkerTotalQuantity(sales, product, customer);
                         BigDecimal mechanicQuantity = new BigDecimal(mechanics.size());
                         logger.debug("Para Mecânico: {}, Produto: {} - {}, Quantidade: {}, Número de mecânicos: {}",
                                 emp.getName(), product.getProductCode(), product.getProductName(), totalQuantity,
@@ -623,14 +691,14 @@ public class CalculeIncentiveService {
         if (ccValue.compareTo(BigDecimal.ZERO) > 0) {
             Incentive incCc = new Incentive(null, referenceDate, user.getState(), employee.getPaymentMethod(),
                     apurationTypes.get("Conta Corrente"), employee, employee.getCpf(), ccValue, function, customer,
-                    saleOrdem, user);
+                    saleOrdem, IncentiveStatus.PENDING, user);
             incentives.add(incCc);
             logger.debug("Incentivo CC criado: {}", incCc);
         }
         if (nfsValue.compareTo(BigDecimal.ZERO) > 0) {
             Incentive incNfs = new Incentive(null, referenceDate, user.getState(), employee.getPaymentMethod(),
                     apurationTypes.get("NF Serviço"), employee, employee.getCpf(), nfsValue, function, customer,
-                    saleOrdem, user);
+                    saleOrdem, IncentiveStatus.PENDING, user);
             incentives.add(incNfs);
             logger.debug("Incentivo NFS criado: {}", incNfs);
         }

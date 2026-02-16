@@ -113,6 +113,46 @@ public class ProductStockService {
 		
 		result.getNewItems().forEach(currentStock::addProductStockItem);
 	}
+	
+	@Transactional
+	public void subtractFromStock(Customer customer, Product product, Integer quantity) {
+		ProductStock stock = customer.getProductStock();
+		
+		if (stock == null) {
+			stock = new ProductStock();
+			stock.setCustomer(customer);
+			customer.setProductStock(stock);
+		}
+		
+		// Criar item com quantidade negativa para subtrair do estoque
+		ProductStockItem itemToSubtract = new ProductStockItem(null, product, -quantity, null);
+		
+		MergeResult result = merger.merge(stock.getProductStockItems(), List.of(itemToSubtract));
+		
+		result.getNewItems().forEach(stock::addProductStockItem);
+		
+		productStockRepository.save(stock);
+	}
+	
+	@Transactional
+	public void addToStock(Customer customer, Product product, Integer quantity) {
+		ProductStock stock = customer.getProductStock();
+		
+		if (stock == null) {
+			stock = new ProductStock();
+			stock.setCustomer(customer);
+			customer.setProductStock(stock);
+		}
+		
+		// Criar item com quantidade positiva para adicionar ao estoque
+		ProductStockItem itemToAdd = new ProductStockItem(null, product, quantity, null);
+		
+		MergeResult result = merger.merge(stock.getProductStockItems(), List.of(itemToAdd));
+		
+		result.getNewItems().forEach(stock::addProductStockItem);
+		
+		productStockRepository.save(stock);
+	}
 
 
 }

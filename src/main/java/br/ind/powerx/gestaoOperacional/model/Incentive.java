@@ -6,6 +6,7 @@ import java.time.LocalDate;
 import org.hibernate.validator.constraints.br.CPF;
 
 import br.ind.powerx.gestaoOperacional.model.enums.State;
+import br.ind.powerx.gestaoOperacional.model.enums.IncentiveStatus;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -80,6 +81,10 @@ public class Incentive{
 	
 	@Column(name = "sale_document_number", nullable = false)
     private Integer saleDocumentNumber;
+	
+	@Enumerated(EnumType.STRING)
+	@Column(name = "status")
+	private IncentiveStatus status = IncentiveStatus.PENDING;
 	
 	@ManyToOne(cascade = CascadeType.MERGE, fetch = FetchType.LAZY)
 	@JoinColumn(name = "user_id")
