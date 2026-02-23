@@ -207,8 +207,8 @@ public class IncentiveController {
 	@ResponseBody
 	public ResponseEntity<?> approveIncentiveByDocument(@PathVariable Integer saleDocumentNumber) {
 		try {
-			incentiveService.approveIncentiveByDocumentNumber(saleDocumentNumber);
-			return ResponseEntity.ok().body("Incentivos aprovados com sucesso");
+			String message = incentiveService.approveIncentiveByDocumentNumber(saleDocumentNumber);
+			return ResponseEntity.ok().body(message);
 		} catch (IllegalStateException e) {
 			return ResponseEntity.badRequest().body(e.getMessage());
 		} catch (IllegalArgumentException e) {
@@ -224,8 +224,8 @@ public class IncentiveController {
 	@ResponseBody
 	public ResponseEntity<?> approveDocument(@PathVariable Integer documentNumber) {
 		try {
-			incentiveService.approveIncentiveByDocumentNumber(documentNumber);
-			return ResponseEntity.ok().body("Documento aprovado com sucesso");
+			String message = incentiveService.approveIncentiveByDocumentNumber(documentNumber);
+			return ResponseEntity.ok().body(message);
 		} catch (IllegalStateException e) {
 			return ResponseEntity.badRequest().body(e.getMessage());
 		} catch (IllegalArgumentException e) {

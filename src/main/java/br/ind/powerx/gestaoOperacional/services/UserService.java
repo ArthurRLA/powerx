@@ -21,6 +21,7 @@ import br.ind.powerx.gestaoOperacional.model.dtos.PositionDto;
 import br.ind.powerx.gestaoOperacional.model.dtos.RegisterDTO;
 import br.ind.powerx.gestaoOperacional.model.dtos.RoleDto;
 import br.ind.powerx.gestaoOperacional.model.dtos.StateDto;
+import br.ind.powerx.gestaoOperacional.model.dtos.ChangePasswordDTO;
 import br.ind.powerx.gestaoOperacional.model.dtos.UserDetailsDto;
 import br.ind.powerx.gestaoOperacional.model.dtos.UserEditDetailsDto;
 import br.ind.powerx.gestaoOperacional.model.dtos.UserSelectDto;
@@ -41,13 +42,16 @@ public class UserService {
 	private final CustomerRepository customerRepository;
 
 	private final PasswordEncoder encoder;
+	
+	private final AuthenticationService authenticationService;
 
 	@Autowired
 	public UserService(UserRepository userRepository, CustomerRepository customerRepository,
-			PasswordEncoder encoder) {
+			PasswordEncoder encoder, AuthenticationService authenticationService) {
 		this.userRepository = userRepository;
 		this.customerRepository = customerRepository;
 		this.encoder = encoder;
+		this.authenticationService = authenticationService;
 	}
 
 	public void save(RegisterDTO registerDTO) throws BadRequestException {
@@ -320,5 +324,26 @@ public class UserService {
 					return dto;
 				})
 				.orElseThrow(() -> new EntityNotFoundException("Usuario com Id: " + id + " não encontrado"));
+	}
+	
+	@Transactional
+	public void changePassword(ChangePasswordDTO changePasswordDTO) {
+		User currentUser = authenticationService.getUserAuthenticated();
+		
+		// Verificar se a senha atual está correta
+		if (!encoder.matches(changePasswordDTO.getCurrentPassword(), currentUser.getPasswordHash())) {
+			throw new IllegalArgumentException("Senha atual incorreta");
+		}
+		
+		// Verificar se a nova senha é diferente da atual
+		if (encoder.matches(changePasswordDTO.getNewPassword(), currentUser.getPasswordHash())) {
+			throw new IllegalArgumentException("A nova senha deve ser diferente da senha atual");
+		}
+		
+		// Criptografar e salvar a nova senha
+		String encodedNewPassword = encoder.encode(changePasswordDTO.getNewPassword());
+		currentUser.setPasswordHash(encodedNewPassword);
+		
+		userRepository.save(currentUser);
 	}
 }

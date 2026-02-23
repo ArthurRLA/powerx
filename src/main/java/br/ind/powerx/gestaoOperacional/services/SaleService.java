@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -471,8 +472,10 @@ public class SaleService {
 					"Nenhuma venda ou incentivo encontrado para o documento: " + documentNumber);
 		}
 
+		// Verificar se os incentivos estavam aprovados para reverter estoque
 		boolean wasApproved = incentives.stream()
-			.anyMatch(i -> i.getStatus() == br.ind.powerx.gestaoOperacional.model.enums.IncentiveStatus.APPROVED);
+			.anyMatch(i -> i.getStatus() == br.ind.powerx.gestaoOperacional.model.enums.IncentiveStatus.APPROVED
+			            || i.getStatus() == br.ind.powerx.gestaoOperacional.model.enums.IncentiveStatus.APPROVED_NEGATIVE);
 		
 		Customer customer = null;
 		if (!sales.isEmpty()) {
@@ -482,13 +485,20 @@ public class SaleService {
 		}
 
 		try {
+			// Se estava aprovado, devolver as quantidades ao estoque
+			// Mas apenas das vendas reais (não aplicações de mecânico)
 			if (wasApproved && customer != null && !sales.isEmpty()) {
 				logger.info("Devolvendo produtos ao estoque (documento estava aprovado)");
-				for (Sale sale : sales) {
+				List<Sale> actualSales = filterActualSales(sales, customer);
+				logger.info("Total de vendas: {}. Vendas que removeram estoque: {}", 
+					sales.size(), actualSales.size());
+				
+				for (Sale sale : actualSales) {
 					productStockService.addToStock(customer, sale.getProduct(), sale.getQuantity());
 				}
 				logger.info("Produtos devolvidos ao estoque com sucesso");
 				
+				// Recalcular conta corrente
 				currentAccountService.updateCurrentAccount(customer);
 				logger.info("Conta corrente recalculada após deleção");
 			}
@@ -500,6 +510,43 @@ public class SaleService {
 		} catch (Exception e) {
 			throw new RuntimeException("Erro ao deletar vendas/incentivos: " + e.getMessage(), e);
 		}
+	}
+	
+	/**
+	 * Filtra as vendas que devem remover do estoque.
+	 * Regra: Se cliente tem apuração "Somente mecânicos", todas são vendas.
+	 * Caso contrário, apenas Consultor Técnico e Consultor de Funilaria são vendas (Mecânico é aplicação).
+	 */
+	private List<Sale> filterActualSales(List<Sale> sales, Customer customer) {
+		if (sales.isEmpty()) {
+			return sales;
+		}
+		
+		// Se o cliente tem apuração "Somente mecânicos", todas as vendas removem estoque
+		if (customer.getMechanicApuration() != null && 
+			customer.getMechanicApuration().getName().equalsIgnoreCase("Somente mecânicos")) {
+			logger.debug("Cliente com apuração 'Somente mecânicos' - todas as vendas removem estoque");
+			return sales;
+		}
+		
+		// Caso contrário, apenas vendas de Consultor Técnico e Consultor de Funilaria removem estoque
+		List<Sale> actualSales = sales.stream()
+			.filter(sale -> {
+				String function = sale.getFunction();
+				boolean isActualSale = function != null && 
+					(function.equalsIgnoreCase("Consultor Técnico") || 
+					 function.equalsIgnoreCase("Consultor de Funilaria"));
+				
+				if (!isActualSale) {
+					logger.debug("Venda do produto {} com função '{}' é considerada aplicação - não remove estoque", 
+						sale.getProduct().getProductName(), function);
+				}
+				
+				return isActualSale;
+			})
+			.collect(Collectors.toList());
+		
+		return actualSales;
 	}
 
 	@Transactional

@@ -60,6 +60,9 @@
                                     <span th:if="${entry.value.status.name() == 'APPROVED'}" class="badge bg-success">
                                         <i class="bi bi-check-circle"></i> Aprovado
                                     </span>
+                                    <span th:if="${entry.value.status.name() == 'APPROVED_NEGATIVE'}" class="badge bg-danger">
+                                        <i class="bi bi-exclamation-triangle"></i> Negativado
+                                    </span>
                                 </td>
                                 <td>
                                     <button type="button" class="btn btn-secondary btn-sm"
@@ -925,6 +928,7 @@
                             <option value="">Todos</option>
                             <option value="PENDING">Pendente</option>
                             <option value="APPROVED">Aprovado</option>
+                            <option value="APPROVED_NEGATIVE">Aprovado-Negativado</option>
                         </select>
                     </div>
                 </div>

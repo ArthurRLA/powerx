@@ -92,7 +92,7 @@ public class SaleQuantityValidator {
 
         List<UpdateSaleItemDTO> consultants = updateSaleDto.getConsultantSales();
         consultants.addAll(updateSaleDto.getTinkerSales());
-        List<UpdateSaleItemDTO> mechanics = updateSaleDto.getConsultantSales();
+        List<UpdateSaleItemDTO> mechanics = updateSaleDto.getMechanicSales();
 
         Map<Long, Integer> consultantProductPerQuantity = consultants.stream()
                 .collect(Collectors.toMap(UpdateSaleItemDTO::getProductId, UpdateSaleItemDTO::getQuantity, Integer::sum));

@@ -2691,6 +2691,7 @@ function eraseTinkerInfos() {
     tinkerResumeSalesTableBody.innerHTML = '';
     setMessageDisplay(noTinkerAvailable, tinkerModalBody, false);
 }
+// Função para aprovar documento
 function approveDocument(documentNumber) {
     if (confirm('Tem certeza que deseja aprovar este documento? Esta ação irá:\n\n• Subtrair as quantidades vendidas do estoque do cliente\n• Recalcular a conta corrente do cliente\n• Alterar o status de todos os incentivos do documento para "Aprovado"')) {
 
@@ -2705,11 +2706,13 @@ function approveDocument(documentNumber) {
                 if (response.ok) {
                     return response.text();
                 } else {
-                    throw new Error('Erro ao aprovar documento');
+                    return response.text().then(text => {
+                        throw new Error(text || 'Erro ao aprovar documento');
+                    });
                 }
             })
             .then(message => {
-                alert('Documento aprovado com sucesso!');
+                alert(message);
                 location.reload();
             })
             .catch(error => {

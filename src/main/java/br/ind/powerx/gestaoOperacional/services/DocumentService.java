@@ -265,12 +265,22 @@ public class DocumentService {
 			String customerName = customer.getFantasyName();
 			LocalDate date = incentives.get(0).getReferenceDate();
 			
+			// Verificar se todos os incentivos do documento têm o mesmo status
+			// Se houver pelo menos um PENDING, o status do documento será PENDING
 			boolean hasPending = incentives.stream()
 				.anyMatch(i -> i.getStatus() == br.ind.powerx.gestaoOperacional.model.enums.IncentiveStatus.PENDING);
 			
-			IncentiveStatus documentStatus = 
-				hasPending ? IncentiveStatus.PENDING 
-						  : IncentiveStatus.APPROVED;
+			br.ind.powerx.gestaoOperacional.model.enums.IncentiveStatus documentStatus = 
+				hasPending ? br.ind.powerx.gestaoOperacional.model.enums.IncentiveStatus.PENDING 
+						  : br.ind.powerx.gestaoOperacional.model.enums.IncentiveStatus.APPROVED;
+			
+			if(!hasPending){
+				boolean hasApproved = incentives.stream()
+					.anyMatch(i -> i.getStatus() == IncentiveStatus.APPROVED);
+
+					documentStatus = hasApproved ? IncentiveStatus.APPROVED
+												 : IncentiveStatus.APPROVED_NEGATIVE;
+			}
 			
 			CustomerDate customerDate = new CustomerDate(customerName, date, documentStatus);
 			documentCustomer.put(documentNumber, customerDate);
@@ -304,6 +314,7 @@ public class DocumentService {
 
 		Map<Integer, CustomerDate> fullMap = getCustomersByDocument(sortedDocumentNumbers);
 		
+		// Filtrar por status se especificado
 		if (status != null && !status.isEmpty()) {
 			fullMap = fullMap.entrySet().stream()
 				.filter(entry -> entry.getValue().getStatus().name().equals(status))

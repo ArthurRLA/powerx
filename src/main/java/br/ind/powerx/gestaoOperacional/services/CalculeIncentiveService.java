@@ -437,23 +437,31 @@ public class CalculeIncentiveService {
         Customer customer = allNewSales.get(0).getCustomer();
         User user = customer.getUser();
 
+        // Buscar vendas antigas e incentivos para controle de estoque
         List<Sale> oldSales = saleRepository.findByDocumentNumber(documentNumber);
         List<Incentive> oldIncentives = incentiveRepository.findBySaleDocumentNumber(documentNumber);
 
+        // Verificar se os incentivos estavam aprovados para reverter estoque
         boolean wasApproved = oldIncentives.stream()
-                .anyMatch(i -> i.getStatus() == br.ind.powerx.gestaoOperacional.model.enums.IncentiveStatus.APPROVED);
+                .anyMatch(i -> i.getStatus() == IncentiveStatus.APPROVED
+                        || i.getStatus() == IncentiveStatus.APPROVED_NEGATIVE);
 
+        // Se estava aprovado, adicionar as quantidades antigas de volta ao estoque
+        // Mas apenas das vendas reais (não aplicações de mecânico)
         if (wasApproved && !oldSales.isEmpty()) {
             logger.info("Revertendo estoque das vendas antigas (documento estava aprovado)");
-            for (Sale oldSale : oldSales) {
+            List<Sale> oldActualSales = filterActualSales(oldSales, customer);
+            logger.info("Total de vendas antigas: {}. Vendas que removeram estoque: {}",
+                    oldSales.size(), oldActualSales.size());
+
+            for (Sale oldSale : oldActualSales) {
                 productStockService.addToStock(customer, oldSale.getProduct(), oldSale.getQuantity());
             }
             logger.info("Estoque revertido com sucesso");
         }
 
-        if (wasApproved) {
-            validateStockForNewSales(customer, allNewSales);
-        }
+        // Não validar estoque - permitir edição mesmo com estoque insuficiente
+        // A validação será feita na próxima aprovação
 
         List<Incentive> incentives = new ArrayList<>();
 
@@ -470,8 +478,7 @@ public class CalculeIncentiveService {
         List<Incentive> incentivesCompacted = compactIncentives(incentives, apurationTypes);
 
         // Definir status como PENDING para todos os novos incentivos
-        incentivesCompacted.forEach(
-                incentive -> incentive.setStatus(br.ind.powerx.gestaoOperacional.model.enums.IncentiveStatus.PENDING));
+        incentivesCompacted.forEach(incentive -> incentive.setStatus(IncentiveStatus.PENDING));
 
         saleRepository.deleteByDocumentNumber(documentNumber);
         incentiveRepository.deleteAllBySaleDocumentNumber(documentNumber);
@@ -483,6 +490,46 @@ public class CalculeIncentiveService {
         currentAccountService.updateCurrentAccount(customer);
 
         logger.info("Incentivos atualizados com sucesso. Status: PENDING");
+    }
+
+    /**
+     * Filtra as vendas que devem remover do estoque.
+     * Regra: Se cliente tem apuração "Somente mecânicos", todas são vendas.
+     * Caso contrário, apenas Consultor Técnico e Consultor de Funilaria são vendas
+     * (Mecânico é aplicação).
+     */
+    private List<Sale> filterActualSales(List<Sale> sales, Customer customer) {
+        if (sales.isEmpty()) {
+            return sales;
+        }
+
+        // Se o cliente tem apuração "Somente mecânicos", todas as vendas removem
+        // estoque
+        if (customer.getMechanicApuration() != null &&
+                customer.getMechanicApuration().getName().equalsIgnoreCase("Somente mecânicos")) {
+            logger.debug("Cliente com apuração 'Somente mecânicos' - todas as vendas removem estoque");
+            return sales;
+        }
+
+        // Caso contrário, apenas vendas de Consultor Técnico e Consultor de Funilaria
+        // removem estoque
+        List<Sale> actualSales = sales.stream()
+                .filter(sale -> {
+                    String function = sale.getFunction();
+                    boolean isActualSale = function != null &&
+                            (function.equalsIgnoreCase("Consultor Técnico") ||
+                                    function.equalsIgnoreCase("Consultor de Funilaria"));
+
+                    if (!isActualSale) {
+                        logger.debug("Venda do produto {} com função '{}' é considerada aplicação - não remove estoque",
+                                sale.getProduct().getProductName(), function);
+                    }
+
+                    return isActualSale;
+                })
+                .collect(Collectors.toList());
+
+        return actualSales;
     }
 
     private void validateStockForNewSales(Customer customer, List<Sale> newSales) {

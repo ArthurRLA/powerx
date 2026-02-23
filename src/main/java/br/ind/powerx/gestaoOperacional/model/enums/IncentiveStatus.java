@@ -2,7 +2,8 @@ package br.ind.powerx.gestaoOperacional.model.enums;
 
 public enum IncentiveStatus {
     PENDING("Pendente"),
-    APPROVED("Aprovado");
+    APPROVED("Aprovado"),
+    APPROVED_NEGATIVE("Aprovado-Negativado");
     
     private final String displayName;
     

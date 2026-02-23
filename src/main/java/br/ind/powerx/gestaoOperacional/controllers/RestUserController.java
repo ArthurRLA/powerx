@@ -9,10 +9,13 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import br.ind.powerx.gestaoOperacional.model.dtos.ChangePasswordDTO;
 import br.ind.powerx.gestaoOperacional.model.dtos.UserDetailsDto;
 import br.ind.powerx.gestaoOperacional.model.dtos.UserEditDetailsDto;
 import br.ind.powerx.gestaoOperacional.model.dtos.UserSelectDto;
@@ -122,6 +125,20 @@ public class RestUserController {
 			return ResponseEntity
 					.status(HttpStatus.INTERNAL_SERVER_ERROR)
 					.body("Erro ao buscar usuários: " + e.getMessage());
+		}
+	}
+	
+	@PostMapping("/change-password")
+	public ResponseEntity<?> changePassword(@RequestBody ChangePasswordDTO changePasswordDTO) {
+		try {
+			userService.changePassword(changePasswordDTO);
+			return ResponseEntity.ok().body("Senha alterada com sucesso");
+		} catch (IllegalArgumentException e) {
+			return ResponseEntity.badRequest().body(e.getMessage());
+		} catch (Exception e) {
+			e.printStackTrace();
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+					.body("Erro ao trocar senha: " + e.getMessage());
 		}
 	}
 }
