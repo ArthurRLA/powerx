@@ -258,35 +258,38 @@ public class DocumentService {
 	}
 
 	public Map<Integer, CustomerDate> getCustomersByDocument(Collection<Integer> documentNumbers) {
-		Map<Integer, CustomerDate> documentCustomer = new LinkedHashMap<>();
-		for (Integer documentNumber : documentNumbers) {
-			var incentives = incentiveRepository.findBySaleDocumentNumber(documentNumber);
-			Customer customer = incentives.get(0).getCustomer();
-			String customerName = customer.getFantasyName();
-			LocalDate date = incentives.get(0).getReferenceDate();
-			
+        Map<Integer, CustomerDate> documentCustomer = new LinkedHashMap<>();
+        for (Integer documentNumber : documentNumbers) {
+            if (documentNumber == null) continue;
+            var incentives = incentiveRepository.findBySaleDocumentNumber(documentNumber);
+            // IF feito para verificar evitar o travamento total do erro IndexOutOfBoundsException
+            if (incentives == null || incentives.isEmpty()) {
+                System.out.println("Documento ignorado por falta de dados: " + documentNumber);
+                continue;
+            }
+            var firstIncentive = incentives.get(0);
+            Customer customer = firstIncentive.getCustomer();
+            String customerName = (customer != null) ? customer.getFantasyName() : "Cliente não identificado";
+            LocalDate date = firstIncentive.getReferenceDate();
+            
 			// Verificar se todos os incentivos do documento têm o mesmo status
 			// Se houver pelo menos um PENDING, o status do documento será PENDING
 			boolean hasPending = incentives.stream()
-				.anyMatch(i -> i.getStatus() == br.ind.powerx.gestaoOperacional.model.enums.IncentiveStatus.PENDING);
-			
-			br.ind.powerx.gestaoOperacional.model.enums.IncentiveStatus documentStatus = 
-				hasPending ? br.ind.powerx.gestaoOperacional.model.enums.IncentiveStatus.PENDING 
-						  : br.ind.powerx.gestaoOperacional.model.enums.IncentiveStatus.APPROVED;
-			
-			if(!hasPending){
-				boolean hasApproved = incentives.stream()
-					.anyMatch(i -> i.getStatus() == IncentiveStatus.APPROVED);
-
-					documentStatus = hasApproved ? IncentiveStatus.APPROVED
-												 : IncentiveStatus.APPROVED_NEGATIVE;
-			}
-			
-			CustomerDate customerDate = new CustomerDate(customerName, date, documentStatus);
-			documentCustomer.put(documentNumber, customerDate);
-		}
-		return documentCustomer;
-	}
+                .anyMatch(i -> i.getStatus() == IncentiveStatus.PENDING);
+            IncentiveStatus documentStatus;
+            if (hasPending) {
+                documentStatus = IncentiveStatus.PENDING;
+            } else {
+                boolean hasApproved = incentives.stream()
+                    .anyMatch(i -> i.getStatus() == IncentiveStatus.APPROVED);
+                documentStatus = hasApproved ? IncentiveStatus.APPROVED
+                                             : IncentiveStatus.APPROVED_NEGATIVE;
+            }
+            CustomerDate customerDate = new CustomerDate(customerName, date, documentStatus);
+            documentCustomer.put(documentNumber, customerDate);
+        }
+        return documentCustomer;
+    }
 
 	public Page<Entry<Integer, CustomerDate>> getPageDoucmentFiltered(int page, int size, LocalDate start,
 			LocalDate end, List<Long> userIds, List<Long> customerIds, String status) {
