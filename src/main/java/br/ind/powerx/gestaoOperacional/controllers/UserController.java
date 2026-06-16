@@ -1,5 +1,6 @@
 package br.ind.powerx.gestaoOperacional.controllers;
 
+import java.beans.PropertyEditorSupport;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -15,8 +16,10 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.InitBinder;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.WebDataBinder;
 
 import br.ind.powerx.gestaoOperacional.model.Customer;
 import br.ind.powerx.gestaoOperacional.model.User;
@@ -50,12 +53,30 @@ public class UserController {
 		this.documentService = documentService;
 	}
 
+	@InitBinder("user")
+	public void initUserBinder(WebDataBinder binder) {
+		binder.registerCustomEditor(Integer.class, "vehicleYear", new PropertyEditorSupport() {
+			@Override
+			public void setAsText(String text) {
+				if (text == null || text.isBlank()) {
+					setValue(null);
+					return;
+				}
+				setValue(Integer.valueOf(text.trim()));
+			}
+		});
+	}
+
 	@GetMapping
 	public String getUsers(@RequestParam(defaultValue = "0") int page,
 			@RequestParam(defaultValue = "50") int size,
+			@RequestParam(name = "activeStatus", required = false) String activeStatus,
+			@RequestParam(name = "active", required = false) Boolean legacyActive,
 			Model model) {
 		User user = authenticationService.getUserAuthenticated();
-		Page<User> usersPage = userService.findAll(PageRequest.of(page, size, Sort.by(Sort.Order.asc("name"))));
+		String status = userService.resolveActiveStatusForList(activeStatus, legacyActive);
+		Page<User> usersPage = userService.findByActiveStatus(PageRequest.of(page, size, Sort.by(Sort.Order.asc("name"))),
+				status);
 
 		usersPage.getContent().forEach(u -> u.getCustomers().sort(
 				Comparator.comparing(Customer::getFantasyName, String.CASE_INSENSITIVE_ORDER)));
@@ -82,6 +103,7 @@ public class UserController {
 		model.addAttribute("positions", positionList);
 		model.addAttribute("states", stateList);
 		model.addAttribute("availableCustomers", availableCustomers);
+		model.addAttribute("activeStatus", status);
 		return "users";
 	}
 
@@ -108,19 +130,21 @@ public class UserController {
 			@RequestParam(defaultValue = "50") int size,
 			@RequestParam(name = "positions", required = false) List<Position> positions,
 			@RequestParam(name = "states", required = false) List<State> states,
-			@RequestParam(name = "active", required = false) boolean active,
+			@RequestParam(name = "activeStatus", required = false) String activeStatus,
+			@RequestParam(name = "active", required = false) Boolean legacyActive,
 			Model model) {
 
-		System.out.println(active);
-		Page<User> filteredUsers = userService.filterUsers(positions, states, active, PageRequest.of(page, size));
+		String status = userService.resolveActiveStatusForList(activeStatus, legacyActive);
+		Page<User> filteredUsers = userService.filterUsers(positions, states, status,
+				PageRequest.of(page, size, Sort.by(Sort.Order.asc("name"))));
 
 		model.addAttribute("users", filteredUsers.getContent());
 		model.addAttribute("currentPage", page);
 		model.addAttribute("totalPages", filteredUsers.getTotalPages());
 
-		model.addAttribute("active", active);
-		model.addAttribute("positions", positions);
-		model.addAttribute("states", states);
+		model.addAttribute("activeStatus", status);
+		model.addAttribute("positions", positions != null ? positions : List.of());
+		model.addAttribute("states", states != null ? states : List.of());
 		model.addAttribute("size", size);
 
 		return "fragments/filteredUsers :: filtered-users";
@@ -129,19 +153,18 @@ public class UserController {
 	@GetMapping("/clearFilters")
 	public String clearFilters(@RequestParam(defaultValue = "0") int page,
 			@RequestParam(defaultValue = "50") int size,
-			@RequestParam(name = "positions", required = false) List<Position> positions,
-			@RequestParam(name = "states", required = false) List<State> states,
-			@RequestParam(name = "active", required = false) boolean active,
 			Model model) {
-		Page<User> filteredUsers = userService.findAll(PageRequest.of(page, size));
+		String status = "ACTIVE";
+		Page<User> filteredUsers = userService.findByActiveStatus(
+				PageRequest.of(page, size, Sort.by(Sort.Order.asc("name"))), status);
 
 		model.addAttribute("users", filteredUsers.getContent());
 		model.addAttribute("currentPage", page);
 		model.addAttribute("totalPages", filteredUsers.getTotalPages());
 
-		model.addAttribute("active", active);
-		model.addAttribute("positions", positions);
-		model.addAttribute("states", states);
+		model.addAttribute("activeStatus", status);
+		model.addAttribute("positions", List.of());
+		model.addAttribute("states", List.of());
 		model.addAttribute("size", size);
 
 		return "fragments/filteredUsers :: filtered-users";

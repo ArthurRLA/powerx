@@ -46,11 +46,23 @@
 								data-bs-toggle="modal" data-bs-target="#newGroupModal">Novo
 								Grupo</button>
 						</div>
-						<input type="text" class="form-control w-auto" id="searchByName"
-							placeholder="Pesquisar por Nome" oninput="searchByName()">
+						<div class="input-group w-auto mb-3" style="max-width: 28rem;">
+							<span class="input-group-text" aria-hidden="true"><svg
+									xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+									fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
+									<path
+										d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z" /></svg></span>
+							<input type="text" class="form-control" id="searchByName"
+								placeholder="Pesquisar"
+								data-search-url="/api/crud-table-search/groups"
+								data-search-kind="groups"
+								data-tbody-selector="#crudSearchTbody"
+								data-pagination-selector="#group-pagination"
+								oninput="searchByName()">
+						</div>
 
 						<div>
-							<table class="table mt-3" id="tableBody">
+							<table class="table mt-3">
 								<thead>
 									<tr>
 										<th>ID</th>
@@ -58,7 +70,7 @@
 										<th>Ações</th>
 									</tr>
 								</thead>
-								<tbody>
+								<tbody id="crudSearchTbody">
 
 									<tr th:each="group : ${groups}">
 										<td th:text="${group.id}"></td>
@@ -75,7 +87,7 @@
 								</tbody>
 							</table>
 							<div class="d-flex justify-content-center mt-3">
-								<ul class="pagination">
+								<ul class="pagination" id="group-pagination">
 									<li class="page-item"
 										th:classappend="${currentPage == 0} ? 'disabled'"><a
 										class="page-link"

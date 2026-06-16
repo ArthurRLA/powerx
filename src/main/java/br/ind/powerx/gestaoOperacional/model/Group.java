@@ -11,6 +11,8 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
@@ -22,6 +24,8 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+
+import br.ind.powerx.gestaoOperacional.util.DbTextUpper;
 
 @AllArgsConstructor
 @NoArgsConstructor
@@ -78,6 +82,12 @@ public class Group {
 		if(products.remove(product)) {
 			product.removeGroup(this);
 		}
+	}
+
+	@PrePersist
+	@PreUpdate
+	private void normalizeVarcharFields() {
+		name = DbTextUpper.upper(name);
 	}
 	
 	

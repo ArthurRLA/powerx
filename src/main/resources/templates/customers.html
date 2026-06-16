@@ -14,9 +14,7 @@
 	<link rel="stylesheet" th:href="@{/styles/customer.css}">
 	<link rel="icon" th:href="@{/images/powerx-icon.png}" type="image/x-icon">
 	<title>Clientes</title>
-	<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0/dist/css/select2.min.css" rel="stylesheet" />
-
-	<link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.1.0-rc.0/css/select2.min.css" rel="stylesheet" />
+	<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 </head>
 
 <body>
@@ -49,36 +47,66 @@
 								onclick="clearCustomerFilters()">Limpar Filtros</button>
 
 						</div>
-						<input type="text" class="form-control w-auto" id="searchByName"
-							placeholder="Pesquisar por Nome" oninput="searchByName()">
+						<div class="input-group w-auto mb-3" style="max-width: 28rem;">
+							<span class="input-group-text" aria-hidden="true"><svg
+									xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+									fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
+									<path
+										d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z" /></svg></span>
+							<input type="text" class="form-control" id="searchByName"
+								placeholder="Pesquisar"
+								data-search-url="/api/crud-table-search/customers"
+								data-search-kind="customers"
+								data-tbody-selector="#crudSearchTbody"
+								data-pagination-selector="#customer-pagination"
+								oninput="searchByName()">
+						</div>
+
+						<button type="button" id="customerProxyDetailsBtn" class="d-none" data-bs-toggle="modal"
+							data-bs-target="#detailsCustomerModal" data-customer-id="" tabindex="-1" aria-hidden="true"></button>
+						<button type="button" id="customerProxyEditBtn" class="d-none" data-bs-toggle="modal"
+							data-bs-target="#editCustomerModal" data-customer-id="" tabindex="-1" aria-hidden="true"></button>
 
 						<div id="customer-table">
-							<table class="table mt-3 table-straped" id="tableBody">
-								<thead>
-									<tr>
-										<th>ID</th>
-										<th>Nome</th>
-										<th>Ações</th>
-									</tr>
-								</thead>
-								<tbody>
-
-									<tr th:each="customer : ${customers}">
-										<td th:text="${customer.id}"></td>
-										<td th:text="${customer.fantasyName}"></td>
-										<td>
-											<button type="button" class="btn btn-warning" data-bs-toggle="modal"
-												data-bs-target="#editCustomerModal"
-												th:data-customer-id="${customer.id}">Editar</button>
-											<button type="button" class="btn btn-info" data-bs-toggle="modal"
-												data-bs-target="#detailsCustomerModal"
-												th:data-customer-id="${customer.id}">Detalhes</button>
-										</td>
-									</tr>
-								</tbody>
-							</table>
+							<div class="customer-table-scroll-outer">
+								<table class="table mt-3 table-straped customer-list-table">
+									<thead>
+										<tr>
+											<th>ID</th>
+											<th>Nome fantasia</th>
+											<th>Cód. Unysoft</th>
+											<th>CNPJ</th>
+											<th>Razão social</th>
+											<th>Endereço</th>
+											<th>Ativo</th>
+											<th>Representante</th>
+											<th>Grupo</th>
+											<th>Apuração mecânicos</th>
+											<th>Seguimento</th>
+											<th>Bandeira</th>
+										</tr>
+									</thead>
+									<tbody id="crudSearchTbody">
+										<tr th:each="customer : ${customers}" class="customer-data-row"
+											th:attr="data-customer-id=${customer.id}">
+											<td th:text="${customer.id}"></td>
+											<td th:text="${customer.fantasyName}"></td>
+											<td th:text="${customer.unysoftCode != null ? customer.unysoftCode : '-'}"></td>
+											<td th:text="${customer.cnpj}"></td>
+											<td th:text="${customer.registeredName}"></td>
+											<td th:text="${customer.address != null ? customer.address : '-'}"></td>
+											<td th:text="${customer.active ? 'Sim' : 'Não'}"></td>
+											<td th:text="${customer.user != null ? customer.user.name : '-'}"></td>
+											<td th:text="${customer.group != null ? customer.group.name : '-'}"></td>
+											<td th:text="${customer.mechanicApuration != null ? customer.mechanicApuration.name : '-'}"></td>
+											<td th:text="${customer.industry != null ? customer.industry.name : '-'}"></td>
+											<td th:text="${customer.flag != null ? customer.flag.name : '-'}"></td>
+										</tr>
+									</tbody>
+								</table>
+							</div>
 							<div class="d-flex justify-content-center mt-3">
-								<ul class="pagination">
+								<ul class="pagination" id="customer-pagination">
 									<li class="page-item" th:classappend="${currentPage == 0} ? 'disabled'"><a
 											class="page-link"
 											th:href="@{/customers(page=${currentPage - 1}, size=50)}">Anterior</a>
@@ -457,7 +485,7 @@
 										<span class="loading-text">Carregando informações...</span>
 									</div>
 									<div id="employeeContainer" style="display: none;">
-										<table class="table mt-3" id="tableBody">
+										<table class="table mt-3">
 											<thead>
 												<tr>
 													<th>CPF</th>
@@ -498,7 +526,7 @@
 									</div>
 
 									<div id="tablePriceContainer" style="display: none;">
-										<table class="table mt-3" id="tableBody">
+										<table class="table mt-3">
 											<thead>
 												<tr>
 													<th>Cód</th>
@@ -868,13 +896,13 @@
 	<script src="https://code.jquery.com/jquery-3.6.4.min.js"
 		integrity="sha384-UG8ao2jwOWB7/oDdObZc6ItJmwUkR/PfMyt9Qs5AwX7PsnYn1CRKCTWyncPTWvaS"
 		crossorigin="anonymous"></script>
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.1.0-rc.0/js/select2.min.js"></script>
-	<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0/dist/js/select2.min.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 	<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
 		integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
 		crossorigin="anonymous"></script>
 	<script th:src="@{/js/loadCustomerInfos.js}"></script>
 	<script th:src="@{/js/search.js}"></script>
+	<script th:src="@{/js/customerRowContextMenu.js}"></script>
 	<script th:src="@{/js/applyCustomerFilters.js}"></script>
 	<script th:src="@{/js/resetCustomerFilter.js}"></script>
 	<script th:src="@{/js/multipleSelectCustomerPage.js}"></script>

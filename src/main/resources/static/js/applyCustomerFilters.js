@@ -22,6 +22,9 @@ function applyCustomerFilters() {
   .then(html => {
     document.getElementById('customer-table').innerHTML = html;
     bootstrap.Modal.getInstance(document.getElementById('filterModal')).hide();
+    if (typeof window.initCustomerRowContextMenu === 'function') {
+      window.initCustomerRowContextMenu();
+    }
   })
   .catch(err => console.error('Erro ao aplicar filtros:', err));
 }

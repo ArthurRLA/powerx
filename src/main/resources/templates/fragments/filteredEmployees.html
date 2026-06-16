@@ -5,7 +5,7 @@
 </head>
 <body>
 	<div th:fragment="filtered-employees (employees)">
-		<table class="table mt-3 table-straped" id="tableBody">
+		<table class="table mt-3 table-straped">
 			<thead>
 				<tr>
 					<th>ID</th>
@@ -13,7 +13,7 @@
 					<th>Ações</th>
 				</tr>
 			</thead>
-			<tbody>
+			<tbody id="crudSearchTbody">
 
 				<tr th:each="employee : ${employees}">
 					<td th:text="${employee.id}"></td>
@@ -30,7 +30,7 @@
 			</tbody>
 		</table>
 		<div class="d-flex justify-content-center mt-3">
-			<ul class="pagination">
+			<ul class="pagination" id="employee-pagination">
 				<li class="page-item"
 					th:classappend="${currentPage == 0} ? 'disabled'"><a
 					class="page-link" href="#"

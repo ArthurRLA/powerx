@@ -14,4 +14,6 @@ public interface IndustryRepository extends JpaRepository<Industry, Long>{
 	@Query("SELECT i FROM Industry i ORDER BY i.name ASC")
 	List<Industry> findAllOrderByNameAsc();
 
+	List<Industry> findByNameContainingIgnoreCaseOrderByNameAsc(String name);
+
 }

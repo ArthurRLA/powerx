@@ -20,6 +20,8 @@
 				<div class="navbar-nav">
 					<a class="nav-link" aria-current="page" th:href="@{/home}">Início</a>
 					<a class="nav-link" th:href="@{/incentives}">Incentivos</a>
+					<a class="nav-link" th:href="@{/revenues}"
+						sec:authorize="hasRole('ADMIN')">Faturamentos</a>
 					<a class="nav-link" th:href="@{/passages}">Passagens</a>
 					<a class="nav-link" th:href="@{/adm}"
 						sec:authorize="hasRole('ADMIN')">Administrativo</a> <a

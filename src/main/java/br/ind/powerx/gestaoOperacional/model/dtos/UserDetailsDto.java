@@ -21,6 +21,11 @@ public class UserDetailsDto {
 	private LocalDate birthDate;
 	private String cpf;
 	private String address;
+	private String rh;
+	private String vehicleBrand;
+	private String vehicleModel;
+	private Integer vehicleYear;
+	private String vehicleFuel;
 	private String email;
 	private String position;
 	private State state;

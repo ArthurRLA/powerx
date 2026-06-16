@@ -20,4 +20,6 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long>, JpaSp
 
 	Optional<Employee> findById(Long id);
 
+	List<Employee> findByNameContainingIgnoreCaseOrderByNameAsc(String name);
+
 }

@@ -5,7 +5,7 @@
 </head>
 <body>
 	<div th:fragment="filtered-table-prices (tablePrices)">
-		<table class="table mt-3 table-straped" id="tableBody">
+		<table class="table mt-3 table-straped">
 			<thead>
 				<tr>
 					<th>Cliente</th>
@@ -14,7 +14,7 @@
 					<th>Ações</th>
 				</tr>
 			</thead>
-			<tbody>
+			<tbody id="crudSearchTbody">
 				<tr th:each="tablePrice : ${tablePrices}">
 					<td th:text="${tablePrice.customer.fantasyName}"></td>
 					<td
@@ -33,7 +33,7 @@
 		</table>
 
 		<div class="d-flex justify-content-center mt-3">
-			<ul class="pagination">
+			<ul class="pagination" id="table-price-pagination">
 				<li class="page-item"
 					th:classappend="${currentPage == 0} ? 'disabled'"><a
 					class="page-link" href="#"

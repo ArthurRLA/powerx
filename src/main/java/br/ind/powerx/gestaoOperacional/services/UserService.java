@@ -22,6 +22,7 @@ import br.ind.powerx.gestaoOperacional.model.dtos.RegisterDTO;
 import br.ind.powerx.gestaoOperacional.model.dtos.RoleDto;
 import br.ind.powerx.gestaoOperacional.model.dtos.StateDto;
 import br.ind.powerx.gestaoOperacional.model.dtos.ChangePasswordDTO;
+import br.ind.powerx.gestaoOperacional.model.dtos.ProfileUpdateDTO;
 import br.ind.powerx.gestaoOperacional.model.dtos.UserDetailsDto;
 import br.ind.powerx.gestaoOperacional.model.dtos.UserEditDetailsDto;
 import br.ind.powerx.gestaoOperacional.model.dtos.UserSelectDto;
@@ -82,6 +83,11 @@ public class UserService {
 		user.setCpf(userToSave.getCpf());
 		user.setBirthday(userToSave.getBirthday());
 		user.setAddress(userToSave.getAddress());
+		user.setRh(userToSave.getRh());
+		user.setVehicleBrand(userToSave.getVehicleBrand());
+		user.setVehicleModel(userToSave.getVehicleModel());
+		user.setVehicleYear(userToSave.getVehicleYear());
+		user.setVehicleFuel(userToSave.getVehicleFuel());
 		user.setEmail(userToSave.getEmail());
 		user.setPhone(userToSave.getPhone());
 		user.setPasswordHash(encryptedPassword);
@@ -105,6 +111,15 @@ public class UserService {
 
 	public Page<User> findAll(Pageable pageable) {
 		return userRepository.findAll(pageable);
+	}
+
+	public Page<User> findByActiveStatus(Pageable pageable, String activeStatus) {
+		String status = normalizeUserActiveStatus(activeStatus);
+		if ("ALL".equals(status)) {
+			return userRepository.findAll(pageable);
+		}
+		boolean active = "ACTIVE".equals(status);
+		return userRepository.findAll(UserSpecifications.isActive(active), pageable);
 	}
 
 	public Optional<User> findById(Long id) {
@@ -133,6 +148,11 @@ public class UserService {
 		user.setCpf(dto.cpf());
 		user.setAddress(dto.address());
 		user.setBirthday(dto.birthday());
+		user.setRh(dto.rh());
+		user.setVehicleBrand(dto.vehicleBrand());
+		user.setVehicleModel(dto.vehicleModel());
+		user.setVehicleYear(dto.vehicleYear());
+		user.setVehicleFuel(dto.vehicleFuel());
 		user.setEmail(dto.email());
 		user.setPhone(dto.phone());
 		user.setRole(dto.role());
@@ -173,11 +193,9 @@ public class UserService {
 		}
 	}
 
-	public Page<User> filterUsers(List<Position> positions, List<State> states, boolean active, Pageable pageable) {
+	public Page<User> filterUsers(List<Position> positions, List<State> states, String activeStatus,
+			Pageable pageable) {
 		Specification<User> spec = Specification.where(null);
-
-		System.out.println("States no service :" + states);
-		System.out.println("Positions no service :" + positions);
 
 		if ((positions != null && !positions.isEmpty())) {
 			spec = spec.and(UserSpecifications.positionsIn(positions));
@@ -187,9 +205,37 @@ public class UserService {
 			spec = spec.and(UserSpecifications.statesIn(states));
 		}
 
-		spec = spec.and(UserSpecifications.isActive(active));
+		String status = normalizeUserActiveStatus(activeStatus);
+		if (!"ALL".equals(status)) {
+			spec = spec.and(UserSpecifications.isActive("ACTIVE".equals(status)));
+		}
 
 		return userRepository.findAll(spec, pageable);
+	}
+
+	private static String normalizeUserActiveStatus(String raw) {
+		if (raw == null || raw.isBlank()) {
+			return "ACTIVE";
+		}
+		String u = raw.trim().toUpperCase();
+		if ("ALL".equals(u)) {
+			return "ALL";
+		}
+		if ("INACTIVE".equals(u) || "FALSE".equals(u)) {
+			return "INACTIVE";
+		}
+		return "ACTIVE";
+	}
+
+	/** Parâmetro explícito de status tem prioridade sobre o legado {@code active=true|false}. */
+	public String resolveActiveStatusForList(String activeStatus, Boolean legacyActive) {
+		if (activeStatus != null && !activeStatus.isBlank()) {
+			return normalizeUserActiveStatus(activeStatus);
+		}
+		if (legacyActive != null) {
+			return legacyActive ? "ACTIVE" : "INACTIVE";
+		}
+		return "ACTIVE";
 	}
 
 	public List<User> findAllByActiveTrue() {
@@ -227,6 +273,11 @@ public class UserService {
 					dto.setBirthDate(u.getBirthday());
 					dto.setCpf(u.getCpf());
 					dto.setAddress(u.getAddress());
+					dto.setRh(u.getRh());
+					dto.setVehicleBrand(u.getVehicleBrand());
+					dto.setVehicleModel(u.getVehicleModel());
+					dto.setVehicleYear(u.getVehicleYear());
+					dto.setVehicleFuel(u.getVehicleFuel());
 					dto.setEmail(u.getEmail());
 					dto.setPosition(u.getPosition().getName());
 					dto.setState(u.getState());
@@ -254,6 +305,11 @@ public class UserService {
 					dto.setCpf(u.getCpf());
 					dto.setBirthDate(u.getBirthday());
 					dto.setAddress(u.getAddress());
+					dto.setRh(u.getRh());
+					dto.setVehicleBrand(u.getVehicleBrand());
+					dto.setVehicleModel(u.getVehicleModel());
+					dto.setVehicleYear(u.getVehicleYear());
+					dto.setVehicleFuel(u.getVehicleFuel());
 					dto.setPhone(u.getPhone());
 					dto.setEmail(u.getEmail());
 					dto.setCurrentPosition(u.getPosition());
@@ -326,6 +382,18 @@ public class UserService {
 				.orElseThrow(() -> new EntityNotFoundException("Usuario com Id: " + id + " não encontrado"));
 	}
 	
+	@Transactional
+	public void updateProfileData(ProfileUpdateDTO dto) {
+		User user = authenticationService.getUserAuthenticated();
+		user.setCpf(dto.cpf());
+		user.setRh(dto.rh());
+		user.setVehicleBrand(dto.vehicleBrand());
+		user.setVehicleModel(dto.vehicleModel());
+		user.setVehicleYear(dto.vehicleYear());
+		user.setVehicleFuel(dto.vehicleFuel());
+		userRepository.save(user);
+	}
+
 	@Transactional
 	public void changePassword(ChangePasswordDTO changePasswordDTO) {
 		User currentUser = authenticationService.getUserAuthenticated();

@@ -8,6 +8,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import br.ind.powerx.gestaoOperacional.model.Customer;
@@ -24,5 +25,14 @@ public interface TablePriceRepository extends JpaRepository<TablePrice, Long>, J
 
 	@Query("SELECT tp FROM TablePrice tp JOIN tp.customer c ORDER BY c.fantasyName ASC")
 	Page<TablePrice> findAllOrderByCustomerFantasyName(Pageable pageable);
+
+	@Query("""
+			SELECT DISTINCT tp FROM TablePrice tp
+			JOIN FETCH tp.customer c
+			JOIN FETCH tp.product p
+			WHERE LOWER(CONCAT(p.productCode, ' ', p.productName)) LIKE LOWER(CONCAT('%', :q, '%'))
+			ORDER BY c.fantasyName ASC, p.productCode ASC
+			""")
+	List<TablePrice> searchForCrudTableByProductText(@Param("q") String q);
 
 }

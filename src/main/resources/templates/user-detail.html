@@ -32,12 +32,26 @@
 	</div>
 
 	<div class="container mt-4">
-		<div>
+		<div class="row">
+			<div class="col-lg-6">
+				<h5 class="text-secondary mb-3">Dados pessoais</h5>
 			<p>
 				ID: <span th:text="${user.id}"></span>
 			</p>
 			<p>
 				Nome: <span th:text="${user.name}"></span>
+			</p>
+			<p>
+				CPF: <span th:text="${!#strings.isEmpty(user.cpf) ? user.cpf : '—'}"></span>
+			</p>
+			<p>
+				Matrícula RH: <span th:text="${!#strings.isEmpty(user.rh) ? user.rh : '—'}"></span>
+			</p>
+			<p>
+				Data de nascimento: <span th:text="${user.birthday != null ? #temporals.format(user.birthday, 'dd/MM/yyyy') : '—'}"></span>
+			</p>
+			<p>
+				Endereço: <span th:text="${!#strings.isEmpty(user.address) ? user.address : '—'}"></span>
 			</p>
 			<p>
 				Email: <span th:text="${user.email}"></span>
@@ -49,10 +63,30 @@
 			<p>
 				Região: <span th:text="${user.state}"></span>
 			</p>
+			</div>
+			<div class="col-lg-6">
+				<h5 class="text-secondary mb-3">Dados do veículo</h5>
+			<p>
+				Marca: <span th:text="${!#strings.isEmpty(user.vehicleBrand) ? user.vehicleBrand : '—'}"></span>
+			</p>
+			<p>
+				Modelo: <span th:text="${!#strings.isEmpty(user.vehicleModel) ? user.vehicleModel : '—'}"></span>
+			</p>
+			<p>
+				Ano: <span th:text="${user.vehicleYear != null ? user.vehicleYear : '—'}"></span>
+			</p>
+			<p>
+				Combustível: <span th:text="${!#strings.isEmpty(user.vehicleFuel) ? user.vehicleFuel : '—'}"></span>
+			</p>
+			</div>
+		</div>
 			<div class="vstack gap-2 col-md-5 mx-auto .g-col-3 .g-start-2">
 				<button class="btn btn-primary"
 					th:data-bs-target="'#showCustomersModal' + ${user.id}"
 					data-bs-toggle="modal">Clientes</button>
+				<button class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#editProfileModal">
+					<i class="bi bi-pencil"></i> Editar Perfil
+				</button>
 				<button class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#changePasswordModal">
 					<i class="bi bi-key"></i> Trocar Senha
 				</button>
@@ -256,6 +290,63 @@
 			</div>
 		</div>
 	</div>
+	<!-- Modal Editar Perfil -->
+	<div class="modal fade" id="editProfileModal" tabindex="-1" aria-labelledby="editProfileModalLabel" aria-hidden="true">
+		<div class="modal-dialog">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h5 class="modal-title" id="editProfileModalLabel">Editar Perfil</h5>
+					<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+				</div>
+				<div class="modal-body">
+					<form id="editProfileForm">
+						<div class="mb-3">
+							<label for="profileCpf" class="form-label">CPF</label>
+							<input type="text" class="form-control" id="profileCpf" maxlength="14"
+								th:value="${user.cpf != null ? user.cpf : ''}">
+						</div>
+						<div class="mb-3">
+							<label for="profileRh" class="form-label">Matrícula RH</label>
+							<input type="text" class="form-control" id="profileRh" maxlength="50"
+								th:value="${user.rh != null ? user.rh : ''}">
+						</div>
+						<hr>
+						<p class="fw-semibold mb-2">Dados do Veículo</p>
+						<div class="row g-2">
+							<div class="col-md-6">
+								<label for="profileVehicleBrand" class="form-label">Marca</label>
+								<input type="text" class="form-control" id="profileVehicleBrand" maxlength="80"
+									th:value="${user.vehicleBrand != null ? user.vehicleBrand : ''}">
+							</div>
+							<div class="col-md-6">
+								<label for="profileVehicleModel" class="form-label">Modelo</label>
+								<input type="text" class="form-control" id="profileVehicleModel" maxlength="80"
+									th:value="${user.vehicleModel != null ? user.vehicleModel : ''}">
+							</div>
+							<div class="col-md-6">
+								<label for="profileVehicleYear" class="form-label">Ano</label>
+								<input type="number" class="form-control" id="profileVehicleYear" min="1950" max="2100"
+									placeholder="Ex.: 2022" th:value="${user.vehicleYear != null ? user.vehicleYear : ''}">
+							</div>
+							<div class="col-md-6">
+								<label for="profileVehicleFuel" class="form-label">Combustível</label>
+								<input type="text" class="form-control" id="profileVehicleFuel" maxlength="40"
+									placeholder="Ex.: Flex, Gasolina, Diesel"
+									th:value="${user.vehicleFuel != null ? user.vehicleFuel : ''}">
+							</div>
+						</div>
+						<div id="profileError" class="alert alert-danger d-none mt-3"></div>
+						<div id="profileSuccess" class="alert alert-success d-none mt-3"></div>
+					</form>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+					<button type="button" class="btn btn-primary" onclick="saveProfile()">Salvar</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
 	<!-- Modal Trocar Senha -->
 	<div class="modal fade" id="changePasswordModal" tabindex="-1" aria-labelledby="changePasswordModalLabel" aria-hidden="true">
 		<div class="modal-dialog">
@@ -319,6 +410,50 @@
 				field.type = 'password';
 				icon.classList.remove('bi-eye-slash');
 				icon.classList.add('bi-eye');
+			}
+		}
+
+		async function saveProfile() {
+			const errorDiv = document.getElementById('profileError');
+			const successDiv = document.getElementById('profileSuccess');
+
+			errorDiv.classList.add('d-none');
+			successDiv.classList.add('d-none');
+
+			const vehicleYearRaw = document.getElementById('profileVehicleYear').value;
+
+			const payload = {
+				cpf: document.getElementById('profileCpf').value.trim() || null,
+				rh: document.getElementById('profileRh').value.trim() || null,
+				vehicleBrand: document.getElementById('profileVehicleBrand').value.trim() || null,
+				vehicleModel: document.getElementById('profileVehicleModel').value.trim() || null,
+				vehicleYear: vehicleYearRaw !== '' ? parseInt(vehicleYearRaw, 10) : null,
+				vehicleFuel: document.getElementById('profileVehicleFuel').value.trim() || null
+			};
+
+			try {
+				const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+				const response = await fetch('/api/users/update-profile', {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+						'X-CSRF-TOKEN': csrfToken
+					},
+					body: JSON.stringify(payload)
+				});
+
+				if (response.ok) {
+					successDiv.textContent = 'Perfil atualizado com sucesso!';
+					successDiv.classList.remove('d-none');
+					setTimeout(() => window.location.reload(), 1500);
+				} else {
+					const error = await response.text();
+					errorDiv.textContent = error || 'Erro ao atualizar perfil';
+					errorDiv.classList.remove('d-none');
+				}
+			} catch (error) {
+				errorDiv.textContent = 'Erro ao atualizar perfil: ' + error.message;
+				errorDiv.classList.remove('d-none');
 			}
 		}
 

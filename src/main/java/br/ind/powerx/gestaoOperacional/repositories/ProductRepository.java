@@ -16,5 +16,6 @@ public interface ProductRepository extends JpaRepository<Product, Long>{
 	@Query("SELECT p FROM Product p ORDER BY p.productCode ASC")
 	List<Product> findAllOrderByProductCodeAsc();
 
+	List<Product> findByProductNameContainingIgnoreCaseOrderByProductCodeAsc(String productName);
 
 }

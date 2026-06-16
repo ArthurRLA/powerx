@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import br.ind.powerx.gestaoOperacional.model.dtos.ChangePasswordDTO;
+import br.ind.powerx.gestaoOperacional.model.dtos.ProfileUpdateDTO;
 import br.ind.powerx.gestaoOperacional.model.dtos.UserDetailsDto;
 import br.ind.powerx.gestaoOperacional.model.dtos.UserEditDetailsDto;
 import br.ind.powerx.gestaoOperacional.model.dtos.UserSelectDto;
@@ -128,6 +129,18 @@ public class RestUserController {
 		}
 	}
 	
+	@PostMapping("/update-profile")
+	public ResponseEntity<?> updateProfile(@RequestBody ProfileUpdateDTO dto) {
+		try {
+			userService.updateProfileData(dto);
+			return ResponseEntity.ok().body("Perfil atualizado com sucesso");
+		} catch (Exception e) {
+			e.printStackTrace();
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+					.body("Erro ao atualizar perfil: " + e.getMessage());
+		}
+	}
+
 	@PostMapping("/change-password")
 	public ResponseEntity<?> changePassword(@RequestBody ChangePasswordDTO changePasswordDTO) {
 		try {

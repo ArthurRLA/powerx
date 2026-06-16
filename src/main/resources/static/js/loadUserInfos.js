@@ -89,6 +89,7 @@ async function fillDetailsUserModal(response) {
 	const userBirthDateText = document.getElementById('userBirthDateText');
 	const userCpfText = document.getElementById('userCpfText');
 	const userAddressText = document.getElementById('userAddressText');
+	const userRhText = document.getElementById('userRhText');
 	const userEmailText = document.getElementById('userEmailText');
 	const userPositionText = document.getElementById('userPositionText');
 	const userStateText = document.getElementById('userStateText');
@@ -98,6 +99,9 @@ async function fillDetailsUserModal(response) {
 	const userLastUpdateText = document.getElementById('userLastUpdateText');
 	const userActiveText = document.getElementById('userActiveText');
 	const userRoleText = document.getElementById('userRoleText');
+	const userVehicleBrandModelText = document.getElementById('userVehicleBrandModelText');
+	const userVehicleYearText = document.getElementById('userVehicleYearText');
+	const userVehicleFuelText = document.getElementById('userVehicleFuelText');
 
 	userIdText.textContent = response.id || '-';
 	userUnysoftCodeText.textContent = response.unysoftCode || '-';
@@ -105,6 +109,7 @@ async function fillDetailsUserModal(response) {
 	userBirthDateText.textContent = response.birthDate || '-';
 	userCpfText.textContent = response.cpf || '-';
 	userAddressText.textContent = response.address || '-';
+	userRhText.textContent = response.rh || '-';
 	userEmailText.textContent = response.email || '-';
 	userPositionText.textContent = response.position || '-';
 	userStateText.textContent = response.state || '-';
@@ -114,6 +119,13 @@ async function fillDetailsUserModal(response) {
 	userLastUpdateText.textContent = response.lastUpdate || '-';
 	userActiveText.textContent = response.active || '-';
 	userRoleText.textContent = response.role || '-';
+
+	const brand = response.vehicleBrand || '';
+	const model = response.vehicleModel || '';
+	const brandModel = [brand, model].filter(Boolean).join(' / ') || '-';
+	userVehicleBrandModelText.textContent = brandModel;
+	userVehicleYearText.textContent = response.vehicleYear != null && response.vehicleYear !== '' ? response.vehicleYear : '-';
+	userVehicleFuelText.textContent = response.vehicleFuel || '-';
 
 	const userCustomersBtn = document.getElementById('userCustomersBtn');
 	userCustomersBtn.setAttribute('data-user-id', response.id);
@@ -208,13 +220,19 @@ async function loadUserEdit(userId) {
 async function fillUserEdit(response, userId) {
 	await endLoadingInfos(loadingUserEdit, editUserDetailsArea);
 
-	document.getElementById('editUnysoftCode').value = response.unysoftCode;
-	document.getElementById('editUsername').value = response.name;
-	document.getElementById('editCpf').value = response.cpf;
-	document.getElementById('editBirthday').value = response.birthDate;
-	document.getElementById('editAddress').value = response.address;
-	document.getElementById('editPhone').value = response.phone;
-	document.getElementById('editEmail').value = response.email;
+	document.getElementById('editUserId').value = userId;
+	document.getElementById('editUnysoftCode').value = response.unysoftCode ?? '';
+	document.getElementById('editUsername').value = response.name ?? '';
+	document.getElementById('editCpf').value = response.cpf ?? '';
+	document.getElementById('editBirthday').value = response.birthDate ?? '';
+	document.getElementById('editAddress').value = response.address ?? '';
+	document.getElementById('editRh').value = response.rh ?? '';
+	document.getElementById('editVehicleBrand').value = response.vehicleBrand ?? '';
+	document.getElementById('editVehicleModel').value = response.vehicleModel ?? '';
+	document.getElementById('editVehicleYear').value = response.vehicleYear != null && response.vehicleYear !== '' ? response.vehicleYear : '';
+	document.getElementById('editVehicleFuel').value = response.vehicleFuel ?? '';
+	document.getElementById('editPhone').value = response.phone ?? '';
+	document.getElementById('editEmail').value = response.email ?? '';
 
 
 	const fillMultipleSelect = (selectId, fullList, id, name, selectedItems) => {

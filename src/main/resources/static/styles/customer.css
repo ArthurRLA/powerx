@@ -1,3 +1,53 @@
+.customer-table-scroll-outer {
+	max-width: 100%;
+	overflow-x: auto;
+	overflow-y: visible;
+	border: 1px solid #dee2e6;
+	border-radius: 0.25rem;
+}
+
+.customer-table-scroll-outer table {
+	margin-bottom: 0;
+	white-space: nowrap;
+}
+
+.customer-list-table {
+	border-collapse: separate;
+	border-spacing: 0;
+}
+
+.customer-list-table thead th {
+	padding: 0.9rem 1.1rem;
+	vertical-align: middle;
+	background-color: #f1f3f5;
+	border-bottom: 2px solid #adb5bd;
+	border-right: 1px solid #ced4da;
+	font-weight: 600;
+}
+
+.customer-list-table thead th:last-child {
+	border-right: none;
+}
+
+.customer-list-table tbody td {
+	padding: 0.9rem 1.1rem;
+	border-bottom: 1px solid #dee2e6;
+	border-right: 1px solid #e9ecef;
+	vertical-align: middle;
+}
+
+.customer-list-table tbody td:last-child {
+	border-right: none;
+}
+
+.customer-list-table tbody tr:last-child td {
+	border-bottom: none;
+}
+
+.customer-row-context-menu button:hover {
+	background-color: #f8f9fa !important;
+}
+
 .button-associations-box {
 	display: flex;
 }

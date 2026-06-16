@@ -52,11 +52,23 @@
 								onclick="clearUserFilters()">Limpar Filtros</button>
 
 						</div>
-						<input type="text" class="form-control w-auto" id="searchByName"
-							placeholder="Pesquisar por Nome" oninput="searchByName()">
+						<div class="input-group w-auto mb-3" style="max-width: 28rem;">
+							<span class="input-group-text" aria-hidden="true"><svg
+									xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+									fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
+									<path
+										d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z" /></svg></span>
+							<input type="text" class="form-control" id="searchByName"
+								placeholder="Pesquisar"
+								data-search-url="/api/crud-table-search/users"
+								data-search-kind="users"
+								data-tbody-selector="#crudSearchTbody"
+								data-pagination-selector="#user-pagination"
+								oninput="searchByName()">
+						</div>
 
 						<div id="user-table">
-							<table class="table mt-3 table-straped" id="tableBody">
+							<table class="table mt-3 table-straped">
 								<thead>
 									<tr>
 										<th>ID</th>
@@ -64,7 +76,7 @@
 										<th>Ações</th>
 									</tr>
 								</thead>
-								<tbody>
+								<tbody id="crudSearchTbody">
 
 									<tr th:each="user : ${users}">
 										<td th:text="${user.id}"></td>
@@ -81,21 +93,22 @@
 								</tbody>
 							</table>
 							<div class="d-flex justify-content-center mt-3">
-								<ul class="pagination">
+								<ul class="pagination" id="user-pagination">
 									<li class="page-item"
 										th:classappend="${currentPage == 0} ? 'disabled'"><a
 										class="page-link"
-										th:href="@{/users(page=${currentPage - 1}, size=50)}">Anterior</a>
+										th:href="@{/users(page=${currentPage - 1}, size=50, activeStatus=${activeStatus})}">Anterior</a>
 									</li>
 									<li class="page-item"
 										th:each="i : ${#numbers.sequence(0, totalPages - 1)}"
 										th:classappend="${i == currentPage} ? 'active'"><a
-										class="page-link" th:href="@{/users(page=${i}, size=50)}"
+										class="page-link"
+										th:href="@{/users(page=${i}, size=50, activeStatus=${activeStatus})}"
 										th:text="${i + 1}"></a></li>
 									<li class="page-item"
 										th:classappend="${currentPage == totalPages - 1} ? 'disabled'">
 										<a class="page-link"
-										th:href="@{/users(page=${currentPage + 1}, size=50)}">Próximo</a>
+										th:href="@{/users(page=${currentPage + 1}, size=50, activeStatus=${activeStatus})}">Próximo</a>
 									</li>
 								</ul>
 							</div>
@@ -140,6 +153,11 @@
 												<div class="mb-3">
 													<label for="newAddress" class="form-label"><strong>Endereço</strong></label>
 													<input type="text" class="form-control" name="address">
+												</div>
+												<div class="mb-3">
+													<label for="newRh" class="form-label"><strong>Matrícula RH</strong></label>
+													<input type="text" class="form-control" name="rh" id="newRh"
+														placeholder="Registro / matrícula de RH" maxlength="50">
 												</div>
 											</div>
 
@@ -201,6 +219,27 @@
 													<input type="tel" class="form-control" name="phone"
 														required>
 												</div>
+												<div class="border rounded p-3 mb-3 bg-light">
+													<h6 class="mb-3">Dados do veículo</h6>
+													<div class="row g-2">
+														<div class="col-md-6">
+															<label for="newVehicleBrand" class="form-label"><strong>Marca</strong></label>
+															<input type="text" class="form-control" name="vehicleBrand" id="newVehicleBrand" maxlength="80">
+														</div>
+														<div class="col-md-6">
+															<label for="newVehicleModel" class="form-label"><strong>Modelo</strong></label>
+															<input type="text" class="form-control" name="vehicleModel" id="newVehicleModel" maxlength="80">
+														</div>
+														<div class="col-md-6">
+															<label for="newVehicleYear" class="form-label"><strong>Ano</strong></label>
+															<input type="number" class="form-control" name="vehicleYear" id="newVehicleYear" min="1950" max="2100" placeholder="Ex.: 2022">
+														</div>
+														<div class="col-md-6">
+															<label for="newVehicleFuel" class="form-label"><strong>Combustível</strong></label>
+															<input type="text" class="form-control" name="vehicleFuel" id="newVehicleFuel" maxlength="40" placeholder="Ex.: Flex, Gasolina, Diesel">
+														</div>
+													</div>
+												</div>
 												<div class="mb-3">
 													<label for="newCustomers" class="form-label"><strong>Selecione
 															os Clientes</strong></label> <select id="multiSelectNew"
@@ -249,6 +288,7 @@
 									<div id="editUserDetailsArea">
 										<form action="/users/update/{id}(id=0)" id="userUpdateForm"
 											method="post" class="refresh-users">
+											<input type="hidden" id="editUserId" name="id" value="">
 											<div class="row">
 												<div class="col-md-6">
 													<div class="mb-3">
@@ -276,6 +316,11 @@
 														<input type="text" class="form-control" id="editAddress"
 															name="address">
 													</div>
+													<div class="mb-3">
+														<label for="editRh" class="form-label"><strong>Matrícula RH</strong></label>
+														<input type="text" class="form-control" id="editRh" name="rh" maxlength="50"
+															placeholder="Registro / matrícula de RH">
+													</div>
 
 													<div class="mb-3">
 														<label for="editPhone" class="form-label"><strong>Telefone</strong></label>
@@ -285,6 +330,27 @@
 												</div>
 
 												<div class="col-md-6">
+													<div class="border rounded p-3 mb-3 bg-light">
+														<h6 class="mb-3">Dados do veículo</h6>
+														<div class="row g-2">
+															<div class="col-md-6">
+																<label for="editVehicleBrand" class="form-label"><strong>Marca</strong></label>
+																<input type="text" class="form-control" id="editVehicleBrand" name="vehicleBrand" maxlength="80">
+															</div>
+															<div class="col-md-6">
+																<label for="editVehicleModel" class="form-label"><strong>Modelo</strong></label>
+																<input type="text" class="form-control" id="editVehicleModel" name="vehicleModel" maxlength="80">
+															</div>
+															<div class="col-md-6">
+																<label for="editVehicleYear" class="form-label"><strong>Ano</strong></label>
+																<input type="number" class="form-control" id="editVehicleYear" name="vehicleYear" min="1950" max="2100">
+															</div>
+															<div class="col-md-6">
+																<label for="editVehicleFuel" class="form-label"><strong>Combustível</strong></label>
+																<input type="text" class="form-control" id="editVehicleFuel" name="vehicleFuel" maxlength="40">
+															</div>
+														</div>
+													</div>
 													<div class="mb-3">
 														<label for="editEmail" class="form-label"><strong>Email</strong></label>
 														<input type="email" class="form-control" id="editEmail"
@@ -383,6 +449,9 @@
 													<Strong>Endereço: </Strong><span id="userAddressText"></span>
 												</p>
 												<p>
+													<Strong>Matrícula RH: </Strong><span id="userRhText"></span>
+												</p>
+												<p>
 													<Strong>Email: </Strong><span id="userEmailText"></span>
 												</p>
 												<p>
@@ -417,6 +486,17 @@
 												<p>
 													<Strong>Tipo de usuário: </Strong><span id="userRoleText">
 													</span>
+												</p>
+												<hr class="my-3">
+												<p class="mb-1"><Strong>Veículo</Strong></p>
+												<p>
+													<Strong>Marca / Modelo: </Strong><span id="userVehicleBrandModelText"></span>
+												</p>
+												<p>
+													<Strong>Ano: </Strong><span id="userVehicleYearText"></span>
+												</p>
+												<p>
+													<Strong>Combustível: </Strong><span id="userVehicleFuelText"></span>
 												</p>
 
 												<div class="vstack gap-3 col-md-8 mx-auto">
@@ -506,11 +586,15 @@
 									</div>
 
 									<div class="mb-3">
-										<label for="filterState" class="form-label">Filtrar
-											por Status</label> <select class="form-select select2" id="filterStatus"
-											name="states" required>
-											<option value="true">Ativo</option>
-											<option value="false">Inativo</option>
+										<label for="filterStatus" class="form-label">Filtrar
+											por status</label> <select class="form-select select2" id="filterStatus"
+											required>
+											<option value="ACTIVE"
+												th:selected="${activeStatus == 'ACTIVE'}">Ativos</option>
+											<option value="INACTIVE"
+												th:selected="${activeStatus == 'INACTIVE'}">Inativos</option>
+											<option value="ALL"
+												th:selected="${activeStatus == 'ALL'}">Todos</option>
 										</select>
 									</div>
 

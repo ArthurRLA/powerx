@@ -62,6 +62,7 @@ public class SecurityConfigurations {
 				.requestMatchers(HttpMethod.GET, "/payment-order").hasRole("ADMIN")
 				.requestMatchers(HttpMethod.GET, "/payment-order/state").hasRole("ADMIN")
 				.requestMatchers(HttpMethod.GET, "/products").hasRole("ADMIN")
+				.requestMatchers(HttpMethod.GET, "/product-incentive-distribution").hasRole("ADMIN")
 				.requestMatchers(HttpMethod.POST, "/products/**").hasRole("ADMIN")
 				.requestMatchers(HttpMethod.GET, "/table-prices").hasRole("ADMIN")
 				.requestMatchers(HttpMethod.POST, "/table-prices").hasRole("ADMIN")

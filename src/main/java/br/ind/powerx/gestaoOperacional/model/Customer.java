@@ -17,12 +17,16 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.OrderBy;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+
+import br.ind.powerx.gestaoOperacional.util.DbTextUpper;
 
 @NoArgsConstructor
 @AllArgsConstructor
@@ -218,7 +222,17 @@ public class Customer {
 			}
 		}
 	}
-	
+
+	@PrePersist
+	@PreUpdate
+	private void normalizeVarcharFields() {
+		unysoftCode = DbTextUpper.upper(unysoftCode);
+		cnpj = DbTextUpper.upper(cnpj);
+		registeredName = DbTextUpper.upper(registeredName);
+		fantasyName = DbTextUpper.upper(fantasyName);
+		address = DbTextUpper.upper(address);
+	}
+
 }
 
 

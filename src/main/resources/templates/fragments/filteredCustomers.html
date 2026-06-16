@@ -5,33 +5,45 @@
 </head>
 <body>
 	<div th:fragment="filtered-customers (customers)">
-		<table class="table mt-3 table-straped" id="tableBody">
-			<thead>
-				<tr>
-					<th>ID</th>
-					<th>Nome</th>
-					<th>Ações</th>
-				</tr>
-			</thead>
-			<tbody>
-
-				<tr th:each="customer : ${customers}">
-					<td th:text="${customer.id}"></td>
-					<td th:text="${customer.fantasyName}"></td>
-					<td>
-						<button type="button" class="btn btn-warning"
-							data-bs-toggle="modal" data-bs-target="#editCustomerModal"
-							th:attr="data-customer-id=${customer.id}">Editar</button>
-						<button type="button" class="btn btn-info" data-bs-toggle="modal"
-							data-bs-target="#detailsCustomerModal"
-							th:attr="data-customer-id=${customer.id}">Detalhes</button>
-					</td>
-				</tr>
-
-			</tbody>
-		</table>
+		<div class="customer-table-scroll-outer">
+			<table class="table mt-3 table-straped customer-list-table">
+				<thead>
+					<tr>
+						<th>ID</th>
+						<th>Nome fantasia</th>
+						<th>Cód. Unysoft</th>
+						<th>CNPJ</th>
+						<th>Razão social</th>
+						<th>Endereço</th>
+						<th>Ativo</th>
+						<th>Representante</th>
+						<th>Grupo</th>
+						<th>Apuração mecânicos</th>
+						<th>Seguimento</th>
+						<th>Bandeira</th>
+					</tr>
+				</thead>
+				<tbody id="crudSearchTbody">
+					<tr th:each="customer : ${customers}" class="customer-data-row"
+						th:attr="data-customer-id=${customer.id}">
+						<td th:text="${customer.id}"></td>
+						<td th:text="${customer.fantasyName}"></td>
+						<td th:text="${customer.unysoftCode != null ? customer.unysoftCode : '-'}"></td>
+						<td th:text="${customer.cnpj}"></td>
+						<td th:text="${customer.registeredName}"></td>
+						<td th:text="${customer.address != null ? customer.address : '-'}"></td>
+						<td th:text="${customer.active ? 'Sim' : 'Não'}"></td>
+						<td th:text="${customer.user != null ? customer.user.name : '-'}"></td>
+						<td th:text="${customer.group != null ? customer.group.name : '-'}"></td>
+						<td th:text="${customer.mechanicApuration != null ? customer.mechanicApuration.name : '-'}"></td>
+						<td th:text="${customer.industry != null ? customer.industry.name : '-'}"></td>
+						<td th:text="${customer.flag != null ? customer.flag.name : '-'}"></td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
 		<div class="d-flex justify-content-center mt-3">
-			<ul class="pagination">
+			<ul class="pagination" id="customer-pagination">
 				<li class="page-item"
 					th:classappend="${currentPage == 0} ? 'disabled'"><a
 					class="page-link" href="#"

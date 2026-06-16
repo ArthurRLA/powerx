@@ -6,7 +6,7 @@ function applyUserFilters() {
 	const params = new URLSearchParams();
 	selectedPositions.forEach(p => params.append('positions', p));
 	selectedStates.forEach(s => params.append('states', s));
-	params.append('active', selectedStatus);
+	params.append('activeStatus', selectedStatus);
 	params.append('page', 0);
 	params.append('size', 50);
 

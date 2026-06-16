@@ -11,10 +11,14 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import br.ind.powerx.gestaoOperacional.util.DbTextUpper;
 
 @Entity
 @Table(name = "industry")
@@ -49,6 +53,12 @@ public class Industry {
             }
         }
     }
+
+	@PrePersist
+	@PreUpdate
+	private void normalizeVarcharFields() {
+		name = DbTextUpper.upper(name);
+	}
 }
 
 

@@ -21,6 +21,8 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OrderBy;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.Past;
 import lombok.AllArgsConstructor;
@@ -28,6 +30,8 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+
+import br.ind.powerx.gestaoOperacional.util.DbTextUpper;
 
 
 @NoArgsConstructor
@@ -57,6 +61,22 @@ public class User{
     
     @Column(length = 255)
     private String address;
+
+    /** Matrícula / registro de RH */
+    @Column(length = 50)
+    private String rh;
+
+    @Column(name = "vehicle_brand", length = 80)
+    private String vehicleBrand;
+
+    @Column(name = "vehicle_model", length = 80)
+    private String vehicleModel;
+
+    @Column(name = "vehicle_year")
+    private Integer vehicleYear;
+
+    @Column(name = "vehicle_fuel", length = 40)
+    private String vehicleFuel;
 
     @Column(nullable = false, unique = true, length = 150)
     private String email;
@@ -229,6 +249,21 @@ public class User{
     		}
     	}
     }
+
+	@PrePersist
+	@PreUpdate
+	private void normalizeVarcharFields() {
+		unysoftCode = DbTextUpper.upper(unysoftCode);
+		name = DbTextUpper.upper(name);
+		cpf = DbTextUpper.upper(cpf);
+		address = DbTextUpper.upper(address);
+		rh = DbTextUpper.upper(rh);
+		vehicleBrand = DbTextUpper.upper(vehicleBrand);
+		vehicleModel = DbTextUpper.upper(vehicleModel);
+		vehicleFuel = DbTextUpper.upper(vehicleFuel);
+		phone = DbTextUpper.upper(phone);
+		role = DbTextUpper.upper(role);
+	}
     
     @Override
     public String toString() {

@@ -43,9 +43,9 @@ public class XLSXOrchestrator {
 		this.xlsxGenerator = xlsxGenerator;
 		
 		strategies = Map.of(
-					paymentMethodRepository.findByName("Swile"), swileOrderStrategy, 
-					paymentMethodRepository.findByName("You Card"), youCardOrderStrategy,
-					paymentMethodRepository.findByName("Pic Pontos"), picPontosOrderStrategy
+					// paymentMethodRepository.findByName("Swile"), swileOrderStrategy, 
+					// paymentMethodRepository.findByName("You Card"), youCardOrderStrategy,
+					// paymentMethodRepository.findByName("Pic Pontos"), picPontosOrderStrategy
 				);
 	}
 	

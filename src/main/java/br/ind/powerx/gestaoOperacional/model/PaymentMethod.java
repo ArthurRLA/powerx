@@ -11,12 +11,17 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
+
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+
+import br.ind.powerx.gestaoOperacional.util.DbTextUpper;
 
 @NoArgsConstructor
 @AllArgsConstructor
@@ -39,7 +44,7 @@ public class PaymentMethod {
 	
 	@OneToMany(mappedBy = "paymentMethod", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
 	private List<Employee> Employees = new ArrayList<>();
-	
+
 	public void addIncentive(Incentive incentive) {
 		if(incentive != null && !incentives.contains(incentive)) {
 			incentives.add(incentive);
@@ -64,6 +69,12 @@ public class PaymentMethod {
 		if(Employees.remove(employee)) {
 			employee.setPaymentMethod(null);
 		}
+	}
+
+	@PrePersist
+	@PreUpdate
+	private void normalizeVarcharFields() {
+		name = DbTextUpper.upper(name);
 	}
 }
 

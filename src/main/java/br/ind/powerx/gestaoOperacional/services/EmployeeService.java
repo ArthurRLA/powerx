@@ -47,6 +47,7 @@ import br.ind.powerx.gestaoOperacional.repositories.ApurationTypeRepository;
 import br.ind.powerx.gestaoOperacional.repositories.CustomerRepository;
 import br.ind.powerx.gestaoOperacional.repositories.EmployeeRepository;
 import br.ind.powerx.gestaoOperacional.repositories.FunctionRepository;
+import br.ind.powerx.gestaoOperacional.repositories.IncentiveRepository;
 import br.ind.powerx.gestaoOperacional.repositories.PaymentMethodRepository;
 import br.ind.powerx.gestaoOperacional.repositories.specifications.EmployeeSpecifications;
 import jakarta.persistence.EntityNotFoundException;
@@ -65,17 +66,20 @@ public class EmployeeService {
 
 	private final ApurationTypeRepository apurationTypeRepository;
 
+	private final IncentiveRepository incentiveRepository;
+
 	private static final Logger logger = LoggerFactory.getLogger(EmployeeService.class);
 
 	@Autowired
 	public EmployeeService(EmployeeRepository employeeRepository, FunctionRepository functionRepository,
 			CustomerRepository customerRepository, PaymentMethodRepository paymentMethodRepository,
-			ApurationTypeRepository apurationTypeRepository) {
+			ApurationTypeRepository apurationTypeRepository, IncentiveRepository incentiveRepository) {
 		this.employeeRepository = employeeRepository;
 		this.functionRepository = functionRepository;
 		this.customerRepository = customerRepository;
 		this.paymentMethodRepository = paymentMethodRepository;
 		this.apurationTypeRepository = apurationTypeRepository;
+		this.incentiveRepository = incentiveRepository;
 	}
 
 	@Transactional
@@ -523,6 +527,21 @@ public class EmployeeService {
 
 	public List<Employee> findAllByActiveTrueOrderByNameAsc() {
 		return employeeRepository.findAllByActiveTrueOrderByNameAsc();
+	}
+
+	/**
+	 * Desativa premiados ativos sem nenhum incentivo ou cuja última data de referência
+	 * de incentivo é anterior ao limite informado.
+	 */
+	@Transactional
+	public int deactivateEmployeesWithoutRecentIncentive(int daysWithoutIncentive) {
+		LocalDate cutoff = LocalDate.now().minusDays(daysWithoutIncentive);
+		List<Employee> stale = incentiveRepository.findActiveEmployeesWithoutIncentiveSince(cutoff);
+		for (Employee e : stale) {
+			e.setActive(false);
+		}
+		employeeRepository.saveAll(stale);
+		return stale.size();
 	}
 
 	public EmployeeDetailsDto getEmployeeDetails(Long id) {

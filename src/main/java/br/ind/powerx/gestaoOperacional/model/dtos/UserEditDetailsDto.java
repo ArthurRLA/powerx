@@ -21,6 +21,11 @@ public class UserEditDetailsDto {
 	private String cpf;
 	private LocalDate birthDate;
 	private String address;
+	private String rh;
+	private String vehicleBrand;
+	private String vehicleModel;
+	private Integer vehicleYear;
+	private String vehicleFuel;
 	private String phone;
 	private String email;
 	private boolean active;

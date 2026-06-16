@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import br.ind.powerx.gestaoOperacional.model.ApurationType;
 import br.ind.powerx.gestaoOperacional.model.Customer;
+import br.ind.powerx.gestaoOperacional.model.Employee;
 import br.ind.powerx.gestaoOperacional.model.Incentive;
 import br.ind.powerx.gestaoOperacional.model.PaymentMethod;
 import br.ind.powerx.gestaoOperacional.model.User;
@@ -66,5 +67,14 @@ public interface IncentiveRepository extends JpaRepository<Incentive, Long>, Jpa
     @Transactional
     @Query("DELETE FROM Incentive i WHERE i.saleDocumentNumber = :saleDocumentNumber")
     void deleteAllBySaleDocumentNumber(@Param("saleDocumentNumber") Integer saleDocumentNumber);
+
+	@Query("""
+			SELECT e FROM Employee e
+			WHERE e.active = true
+			AND (
+				(SELECT MAX(i.referenceDate) FROM Incentive i WHERE i.employee = e) < :cutoff
+			)
+			""")
+	List<Employee> findActiveEmployeesWithoutIncentiveSince(@Param("cutoff") LocalDate cutoff);
 
 }

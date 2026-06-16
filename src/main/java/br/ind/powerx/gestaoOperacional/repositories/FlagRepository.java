@@ -13,4 +13,6 @@ public interface FlagRepository extends JpaRepository<Flag, Long>{
 	@Query("SELECT f FROM Flag f ORDER BY f.name ASC")
 	List<Flag> findAllOrderByNameAsc();
 
+	List<Flag> findByNameContainingIgnoreCaseOrderByNameAsc(String name);
+
 }

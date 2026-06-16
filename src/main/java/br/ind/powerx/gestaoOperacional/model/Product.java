@@ -13,13 +13,18 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
+
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
+
+import br.ind.powerx.gestaoOperacional.util.DbTextUpper;
 
 @NoArgsConstructor
 @AllArgsConstructor
@@ -60,7 +65,7 @@ public class Product {
 	
 	@OneToMany(mappedBy = "product", cascade = CascadeType.ALL)
 	private List<MonitoringSale> monitoringSales = new ArrayList<>();
-	
+
 	public void addIncentiveValue(IncentiveValue incentiveValue) {
 		if(incentiveValue != null && !incentiveValues.contains(incentiveValue)) {
 			incentiveValues.add(incentiveValue);
@@ -118,7 +123,15 @@ public class Product {
 			}
 		}
 	}
-	
+
+	@PrePersist
+	@PreUpdate
+	private void normalizeVarcharFields() {
+		unysoftCode = DbTextUpper.upper(unysoftCode);
+		productCode = DbTextUpper.upper(productCode);
+		productName = DbTextUpper.upper(productName);
+	}
+
 }
 
 

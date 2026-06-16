@@ -5,7 +5,7 @@
 </head>
 <body>
 	<div th:fragment="filtered-users (users)">
-		<table class="table mt-3 table-straped" id="tableBody">
+		<table class="table mt-3 table-straped">
 			<thead>
 				<tr>
 					<th>ID</th>
@@ -13,7 +13,7 @@
 					<th>Ações</th>
 				</tr>
 			</thead>
-			<tbody>
+			<tbody id="crudSearchTbody">
 
 				<tr th:each="user : ${users}">
 					<td th:text="${user.id}"></td>
@@ -29,14 +29,14 @@
 			</tbody>
 		</table>
 		<div class="d-flex justify-content-center mt-3">
-			<ul class="pagination">
+			<ul class="pagination" id="user-pagination">
 				<li class="page-item"
 					th:classappend="${currentPage == 0} ? 'disabled'"><a
 					class="page-link" href="#"
 					th:data-url="@{'/users/filter'(
              positions=${positions},
              states=${states},
-			 active=${active},
+			 activeStatus=${activeStatus},
              page=${currentPage - 1},
              size=${size}
            )}">
@@ -48,7 +48,7 @@
 					th:data-url="@{'/users/filter'(
              positions=${positions},
              states=${states},
-			 active=${active},
+			 activeStatus=${activeStatus},
              page=${i},
              size=${size}
            )}"
@@ -59,7 +59,7 @@
 					th:data-url="@{'/users/filter'(
              positions=${positions},
              states=${states},
-			 active=${active},
+			 activeStatus=${activeStatus},
              page=${currentPage + 1},
              size=${size}
            )}">

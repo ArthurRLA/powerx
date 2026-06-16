@@ -20,5 +20,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
 
 	@Query("SELECT u FROM User u ORDER BY u.name ASC")
 	List<User> findAllOrderByNameAsc();
-	
+
+	List<User> findByNameContainingIgnoreCaseOrderByNameAsc(String name);
+
 }

@@ -1,8 +1,12 @@
 function clearUserFilters() {
 	document.getElementById('filterPosition').selectedIndex = -1;
 	document.getElementById('filterState').selectedIndex = -1;
+	const statusSel = document.getElementById('filterStatus');
+	if (statusSel) {
+		statusSel.value = 'ACTIVE';
+	}
 
-	fetch('/users/clearFilters', {
+	fetch('/users/clearFilters?page=0&size=50', {
 		method: 'GET'
 	})
 		.then(response => response.text())

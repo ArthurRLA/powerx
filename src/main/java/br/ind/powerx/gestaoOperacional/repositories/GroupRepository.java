@@ -14,4 +14,6 @@ public interface GroupRepository extends JpaRepository<Group, Long>{
 	@Query("SELECT g FROM Group g ORDER BY g.name ASC")
 	List<Group> findAllOrderByNameAsc();
 
+	List<Group> findByNameContainingIgnoreCaseOrderByNameAsc(String name);
+
 }

@@ -13,6 +13,8 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
@@ -29,6 +31,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
+
+import br.ind.powerx.gestaoOperacional.util.DbTextUpper;
 
 @NoArgsConstructor
 @AllArgsConstructor
@@ -183,6 +187,14 @@ public class Employee {
 				sale.setEmployee(null);
 			}
 		}
+	}
+
+	@PrePersist
+	@PreUpdate
+	private void normalizeVarcharFields() {
+		cpf = DbTextUpper.upper(cpf);
+		name = DbTextUpper.upper(name);
+		phone = DbTextUpper.upper(phone);
 	}
 }
 
